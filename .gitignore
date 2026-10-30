@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+.ideaforge/
+.venv/
+.env
+.env.*
+!.env.example
+*.db
+*.db-shm
+*.db-wal
+*.db.*
+*.log
+.claude-flow/
+.swarm/
+.agent/
+data/

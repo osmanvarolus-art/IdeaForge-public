@@ -1,0 +1,4478 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>IdeaForge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --bg: #111110;
+      --bg-card: #1a1a19;
+      --bg-card-solid: #1a1a19;
+      --bg-input: #232321;
+      --accent: #3987e5;
+      --accent-dim: rgba(57,135,229,0.12);
+      --accent-glow: rgba(57,135,229,0.25);
+      --text: #fff;
+      --text-muted: #c3c2b7;
+      --text-dim: #8a897e;
+      --border: #33332f;
+      --border-hover: #444;
+      --build: #199e70;
+      --build-dim: rgba(0,255,136,0.12);
+      --skip: #d95926;
+      --skip-dim: rgba(255,68,68,0.12);
+      --park: #ffaa00;
+      --park-dim: rgba(255,170,0,0.12);
+      --font-display: 'JetBrains Mono', monospace;
+      --font-body: 'IBM Plex Sans', sans-serif;
+      --radius: 10px;
+      --radius-sm: 6px;
+    }
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family: var(--font-body); background: var(--bg); color: var(--text); min-height:100vh; }
+
+    /* ---- Hero ---- */
+    .hero {
+      border-bottom: 1px solid var(--border);
+      padding: 20px 24px 16px;
+      text-align: center;
+      background: linear-gradient(180deg, rgba(0,240,255,0.03) 0%, transparent 100%);
+    }
+    .hero-inner { max-width: 900px; margin: 0 auto; }
+    .hero h1 {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.5px;
+    }
+    .hero-sub {
+      margin-top: 4px;
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+    .input-group {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .input-group input {
+      flex: 1;
+      padding: 14px 16px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--accent);
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .input-group input:focus { border-color: var(--accent); }
+    .input-group input::placeholder { color: var(--text-dim); }
+    .btn-primary {
+      padding: 14px 24px;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.2s;
+    }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-secondary {
+      padding: 10px 16px;
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-display);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover { color: var(--accent); border-color: var(--accent); }
+    .input-alt { margin-top: 10px; }
+    .preflight {
+      margin-top: 16px;
+      font-family: var(--font-display);
+      font-size: 0.75rem;
+      color: var(--text-dim);
+    }
+    .preflight .ok { color: var(--build); }
+    .preflight .warn { color: var(--park); }
+    .preflight .fail { color: var(--skip); }
+
+    /* ---- Sections ---- */
+    .section { padding: 24px; }
+    .section-inner { max-width: 100%; margin: 0 auto; padding: 0 24px; }
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .section-head h2 {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      color: var(--accent);
+    }
+    .hidden { display: none !important; }
+
+    /* ---- Search Results ---- */
+    .search-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+    }
+    .search-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+      backdrop-filter: blur(12px);
+      position: relative;
+    }
+    .search-card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+    .search-card.selected { border-color: var(--accent); background: var(--accent-dim); }
+    .search-card .sc-title {
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 6px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .search-card .sc-meta {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .search-card .sc-check {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: var(--accent);
+      transition: all 0.2s;
+    }
+    .search-card.selected .sc-check { border-color: var(--accent); background: var(--accent-dim); }
+
+    /* ---- Idea Cards ---- */
+    .idea-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 14px;
+      backdrop-filter: blur(12px);
+      transition: all 0.3s;
+      animation: fadeIn 0.3s ease-out;
+    }
+    .idea-card:hover { border-color: var(--border-hover); transform: translateY(-1px); }
+    .idea-card .ic-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+    .idea-card .ic-title {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    .idea-card .ic-url {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      font-family: var(--font-display);
+      margin-top: 2px;
+    }
+    .idea-card .ic-delete {
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 4px;
+      transition: color 0.2s;
+    }
+    .idea-card .ic-delete:hover { color: var(--skip); }
+
+    /* ---- Pipeline Stepper ---- */
+    .stepper {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin: 16px 0;
+      padding: 12px 16px;
+      background: rgba(0,0,0,0.3);
+      border-radius: var(--radius-sm);
+    }
+    .step {
+      flex: 1;
+      text-align: center;
+      position: relative;
+    }
+    .step-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      font-family: var(--font-display);
+      font-size: 0.75rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      transition: all 0.3s;
+    }
+    .step.done .step-num { border-color: var(--build); color: var(--build); background: rgba(0,255,136,0.1); }
+    .step.running .step-num { border-color: var(--park); color: var(--park); background: rgba(255,170,0,0.1); animation: pulse 1.2s infinite; }
+    .step.waiting .step-num { border-color: var(--text-dim); color: var(--text-dim); }
+    .step.failed .step-num { border-color: var(--skip); color: var(--skip); background: rgba(255,68,68,0.1); }
+    .step-label {
+      font-family: var(--font-display);
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      display: block;
+    }
+    .step-desc {
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      display: block;
+      margin-top: 2px;
+    }
+    .step-time {
+      font-family: var(--font-display);
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      display: block;
+      margin-top: 2px;
+    }
+    .step-arrow {
+      color: var(--text-dim);
+      font-size: 1.2rem;
+      padding: 0 8px;
+      flex-shrink: 0;
+    }
+
+    /* ---- Verdict Badge ---- */
+    .verdict {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 24px;
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.9rem;
+      letter-spacing: 0.5px;
+    }
+    .verdict-BUILD { background: var(--build-dim); color: var(--build); border: 1px solid rgba(0,255,136,0.3); box-shadow: 0 0 20px rgba(0,255,136,0.1); }
+    .verdict-SKIP { background: var(--skip-dim); color: var(--skip); border: 1px solid rgba(255,68,68,0.3); box-shadow: 0 0 20px rgba(255,68,68,0.1); }
+    .verdict-PARK { background: var(--park-dim); color: var(--park); border: 1px solid rgba(255,170,0,0.3); box-shadow: 0 0 20px rgba(255,170,0,0.1); }
+    .verdict-section {
+      margin: 14px 0;
+      padding: 14px 18px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+    .verdict-section.vs-BUILD { background: var(--build-dim); border-color: rgba(0,255,136,0.2); }
+    .verdict-section.vs-SKIP { background: var(--skip-dim); border-color: rgba(255,68,68,0.2); }
+    .verdict-section.vs-PARK { background: var(--park-dim); border-color: rgba(255,170,0,0.2); }
+    .verdict-summary {
+      font-size: 0.85rem;
+      color: var(--text);
+      margin-top: 8px;
+      line-height: 1.4;
+    }
+    .verdict-scores {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-top: 8px;
+      font-family: var(--font-display);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    /* ---- Transcript Preview ---- */
+    .ic-preview {
+      margin-top: 12px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* ---- Card Actions ---- */
+    .ic-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 14px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .ic-actions-view { display: flex; gap: 6px; }
+    .ic-actions-run { display: flex; gap: 6px; }
+    .btn-view {
+      padding: 6px 12px;
+      background: var(--bg-card-solid);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 0.78rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-view:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-run {
+      padding: 6px 12px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-dim);
+      font-size: 0.72rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-run:hover { border-color: var(--accent); color: var(--accent); }
+    .ic-footer {
+      margin-top: 10px;
+      font-family: var(--font-display);
+      font-size: 0.65rem;
+      color: var(--text-dim);
+    }
+
+    /* ---- Modal ---- */
+    .modal {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      overflow-y: auto;
+      padding: 40px 16px;
+      z-index: 100;
+    }
+    .modal.open { display: flex; }
+    .modal-inner {
+      width: min(1000px, 96vw);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .modal-header h2 {
+      font-family: var(--font-display);
+      font-size: 1rem;
+    }
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      overflow-x: auto;
+    }
+    .tab {
+      padding: 12px 18px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-muted);
+      font-family: var(--font-display);
+      font-size: 0.8rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab-pane { display: none; padding: 20px; }
+    .tab-pane.active { display: block; }
+    .tab-desc {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      margin-bottom: 12px;
+      font-style: italic;
+    }
+    .tab-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .tab-content pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: var(--bg-card-solid);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+      font-family: var(--font-display);
+      font-size: 0.8rem;
+      max-height: 60vh;
+      overflow: auto;
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    /* ---- Notebooks ---- */
+    .nb-panel {
+      background: linear-gradient(135deg, rgba(17,17,17,0.9), rgba(10,10,30,0.9));
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 10px;
+    }
+    .nb-panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .nb-panel-header h2 {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      color: var(--accent);
+    }
+    .nb-auth {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: var(--font-display);
+      font-size: 0.75rem;
+      padding: 6px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-card-solid);
+    }
+    .nb-auth.auth-ok { border-color: var(--build); }
+    .nb-auth.auth-fail { border-color: var(--park); }
+    .nb-auth-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .nb-auth.auth-ok .nb-auth-dot { background: var(--build); box-shadow: 0 0 6px var(--build); }
+    .nb-auth.auth-fail .nb-auth-dot { background: var(--park); box-shadow: 0 0 6px var(--park); }
+    .nb-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 10px;
+      backdrop-filter: blur(12px);
+      transition: all 0.2s;
+    }
+    .nb-card:hover { border-color: var(--border-hover); }
+    .nb-header { display: flex; justify-content: space-between; align-items: center; }
+    .nb-title { font-weight: 600; }
+    .nb-meta {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+      font-family: var(--font-display);
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .nb-meta-item { display: flex; align-items: center; gap: 4px; }
+    .nb-status {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      font-family: var(--font-display);
+      text-transform: uppercase;
+    }
+    .nb-status-ready { background: var(--build-dim); color: var(--build); }
+    .nb-status-creating, .nb-status-generating, .nb-status-queued, .nb-status-waiting { background: var(--park-dim); color: var(--park); animation: pulse 1.2s infinite; }
+    .nb-status-failed { background: rgba(255,68,68,0.1); color: var(--skip); }
+    .nb-status-pending { background: rgba(255,255,255,0.05); color: var(--text-dim); }
+    .nb-actions {
+      margin-top: 12px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .nb-gen-btns { display: flex; gap: 4px; flex-wrap: wrap; }
+    .btn-gen {
+      padding: 6px 12px;
+      background: var(--bg-card-solid);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      font-family: var(--font-display);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .btn-gen:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-gen.generating { border-color: var(--park); color: var(--park); animation: pulse 1.2s infinite; pointer-events: none; }
+    .btn-push {
+      padding: 5px 10px;
+      background: linear-gradient(135deg, rgba(0,240,255,0.1), rgba(0,180,255,0.1));
+      border: 1px solid rgba(0,240,255,0.3);
+      border-radius: var(--radius-sm);
+      color: var(--accent);
+      font-size: 0.7rem;
+      font-family: var(--font-display);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-push:hover { background: rgba(0,240,255,0.2); border-color: var(--accent); box-shadow: 0 0 12px rgba(0,240,255,0.2); }
+    .nb-chat {
+      margin-top: 12px;
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
+    }
+    .nb-chat-input {
+      display: flex;
+      gap: 6px;
+    }
+    .nb-chat-input input {
+      flex: 1;
+      padding: 8px 12px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 0.8rem;
+    }
+    .nb-chat-input input:focus { outline: none; border-color: var(--accent); }
+    .nb-chat-answer {
+      margin-top: 10px;
+      padding: 12px;
+      background: rgba(0,240,255,0.05);
+      border: 1px solid rgba(0,240,255,0.15);
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .nb-empty {
+      padding: 30px;
+      text-align: center;
+      color: var(--text-dim);
+      font-size: 0.85rem;
+    }
+    .nb-empty-icon { font-size: 2rem; margin-bottom: 8px; }
+    .nb-push-dialog {
+      padding: 16px;
+      background: var(--bg-card-solid);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      margin-top: 10px;
+    }
+    .nb-push-dialog input {
+      width: 100%;
+      padding: 10px 12px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 0.85rem;
+      margin-bottom: 10px;
+    }
+    .nb-push-dialog input:focus { outline: none; border-color: var(--accent); }
+    .nlm-install-hint {
+      padding: 16px;
+      background: rgba(255,170,0,0.08);
+      border: 1px solid rgba(255,170,0,0.2);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-display);
+      font-size: 0.8rem;
+      color: var(--park);
+    }
+    .nlm-install-hint code {
+      background: rgba(0,0,0,0.3);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 0.75rem;
+    }
+
+    /* ---- Empty State ---- */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .empty-state h3 {
+      font-family: var(--font-display);
+      color: var(--text-muted);
+      font-size: 1rem;
+      margin-bottom: 20px;
+    }
+    .empty-steps {
+      text-align: left;
+      display: inline-block;
+    }
+    .empty-steps .es-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .empty-steps .es-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    .empty-steps .es-text {
+      font-size: 0.9rem;
+      line-height: 1.5;
+      padding-top: 3px;
+    }
+    .empty-steps .es-text strong { color: var(--text); }
+    .empty-steps .es-text span { color: var(--text-muted); }
+    .empty-cta {
+      margin-top: 24px;
+      color: var(--text-dim);
+      font-size: 0.85rem;
+    }
+
+    /* ---- Selection Bar ---- */
+    .selection-bar {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-card-solid);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 90;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 30px rgba(0,240,255,0.15);
+    }
+    .selection-bar .sb-count {
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      color: var(--accent);
+    }
+
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: var(--accent);
+      color: var(--bg);
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-display);
+      font-size: 0.8rem;
+      font-weight: 700;
+      z-index: 200;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      max-width: 400px;
+    }
+    .toast.show { opacity: 1; }
+
+    /* ---- Animations ---- */
+    @keyframes fadeIn { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } }
+    @keyframes pulse { 0%,100%{ opacity:1; } 50%{ opacity:0.4; } }
+
+    /* ---- Main Nav Tabs ---- */
+    .main-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      background: var(--bg);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+    .main-tab {
+      padding: 14px 24px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--text-muted);
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .main-tab:hover { color: var(--text); }
+    .main-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* ---- Pipeline View ---- */
+    .pipeline-view { max-width: 1400px; margin: 0 auto; padding: 24px; }
+    .pipe-header { text-align: center; padding: 24px 0 8px; }
+    .pipe-header h2 { font-family: var(--font-display); font-size: 1.4rem; color: var(--accent); }
+    .pipe-header p { margin-top: 8px; color: var(--text-muted); font-size: 0.9rem; }
+
+    .wizard-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      margin: 20px 0 28px;
+      padding: 14px;
+    }
+    .ws { text-align: center; flex: 0 0 auto; padding: 0 14px; }
+    .ws-num {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 32px; height: 32px; border-radius: 50%;
+      border: 2px solid var(--border);
+      font-family: var(--font-display); font-size: 0.8rem; font-weight: 700;
+      margin-bottom: 4px; transition: all 0.3s;
+    }
+    .ws.ws-active .ws-num { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+    .ws.ws-done .ws-num { border-color: var(--build); color: var(--build); background: rgba(0,255,136,0.1); }
+    .ws-lbl { font-family: var(--font-display); font-size: 0.7rem; color: var(--text-muted); display: block; }
+    .ws.ws-active .ws-lbl { color: var(--accent); }
+    .ws.ws-done .ws-lbl { color: var(--build); }
+    .ws-arrow { color: var(--text-dim); font-size: 1rem; padding: 0 4px; }
+
+    .url-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+    .url-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 12px;
+      background: var(--accent-dim); border: 1px solid rgba(0,240,255,0.3);
+      border-radius: 20px;
+      font-family: var(--font-display); font-size: 0.75rem; color: var(--accent);
+      max-width: 350px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .url-chip button { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 0.9rem; flex-shrink: 0; }
+    .url-chip button:hover { color: var(--skip); }
+
+    .progress-overall {
+      margin: 16px 0; padding: 16px;
+      background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); text-align: center;
+    }
+    .progress-bar-track { width: 100%; height: 6px; background: var(--border); border-radius: 3px; margin-top: 8px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.5s ease; }
+
+    .pv-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 16px;
+    }
+    .pv-title { flex: 1; font-weight: 500; font-size: 0.9rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .pv-dots { display: flex; gap: 4px; flex-shrink: 0; }
+    .pv-dot {
+      width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--border); transition: all 0.3s;
+    }
+    .pv-dot.d-done { border-color: var(--build); background: var(--build); }
+    .pv-dot.d-run { border-color: var(--park); background: var(--park); animation: pulse 1.2s infinite; }
+    .pv-dot.d-fail { border-color: var(--skip); background: var(--skip); }
+
+    .results-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px; margin-top: 16px;
+    }
+    .result-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 16px; cursor: pointer; transition: all 0.2s;
+    }
+    .result-card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+
+    /* ---- Radar / Subscription Cards ---- */
+    .sub-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 10px;
+      backdrop-filter: blur(12px);
+      transition: all 0.2s;
+    }
+    .sub-card:hover { border-color: var(--border-hover); }
+    .sub-header { display: flex; justify-content: space-between; align-items: center; }
+    .sub-name { font-weight: 600; font-size: 0.95rem; }
+    .sub-kind-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.6rem;
+      font-weight: 700;
+      font-family: var(--font-display);
+      text-transform: uppercase;
+      background: var(--accent-dim);
+      color: var(--accent);
+      margin-left: 8px;
+    }
+    .sub-meta {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 6px;
+      font-family: var(--font-display);
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .sub-actions { margin-top: 10px; display: flex; gap: 6px; align-items: center; }
+    .sub-toggle {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      background: var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      border: none;
+      transition: background 0.2s;
+    }
+    .sub-toggle.on { background: var(--build); }
+    .sub-toggle::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: white;
+      transition: transform 0.2s;
+    }
+    .sub-toggle.on::after { transform: translateX(16px); }
+
+    /* ---- Outcome Tracking ---- */
+    .outcome-prompt {
+      margin-top: 10px;
+      padding: 10px 14px;
+      background: rgba(255,170,0,0.06);
+      border: 1px solid rgba(255,170,0,0.15);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .outcome-prompt-text {
+      font-size: 0.8rem;
+      color: var(--park);
+      flex: 1;
+      min-width: 120px;
+    }
+    .outcome-btns { display: flex; gap: 6px; flex-wrap: wrap; }
+    .btn-outcome {
+      padding: 5px 12px;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-display);
+      font-size: 0.7rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: transparent;
+      transition: all 0.2s;
+    }
+    .btn-outcome:hover { transform: translateY(-1px); }
+    .btn-outcome-shipped { color: var(--build); border-color: rgba(0,255,136,0.3); }
+    .btn-outcome-shipped:hover { background: var(--build-dim); }
+    .btn-outcome-building { color: var(--park); border-color: rgba(255,170,0,0.3); }
+    .btn-outcome-building:hover { background: var(--park-dim); }
+    .btn-outcome-abandoned { color: var(--skip); border-color: rgba(255,68,68,0.3); }
+    .btn-outcome-abandoned:hover { background: var(--skip-dim); }
+    .outcome-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 12px;
+      font-family: var(--font-display);
+      font-size: 0.68rem;
+      font-weight: 700;
+      margin-left: 10px;
+    }
+    .outcome-tag-shipped { background: var(--build-dim); color: var(--build); }
+    .outcome-tag-in_progress { background: var(--park-dim); color: var(--park); }
+    .outcome-tag-abandoned { background: var(--skip-dim); color: var(--skip); }
+    .outcome-tag-pivoted { background: rgba(140,100,255,0.12); color: #a78bfa; }
+
+    /* ==== Insights / Patterns ==== */
+    .pattern-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      backdrop-filter: blur(12px);
+    }
+    .pattern-section h3 {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+    .pattern-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .pattern-metric {
+      background: rgba(0,0,0,0.3);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 16px;
+    }
+    .pattern-metric-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .pattern-metric-value {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .pattern-metric-sub {
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      margin-top: 4px;
+    }
+    .pattern-bar-container {
+      margin-bottom: 16px;
+    }
+    .pattern-bar-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .pattern-bar {
+      display: flex;
+      height: 28px;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      background: rgba(0,0,0,0.3);
+    }
+    .pattern-bar-seg {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-display);
+      font-size: 0.7rem;
+      font-weight: 700;
+      min-width: 30px;
+      transition: width 0.5s ease;
+    }
+    .pattern-bar-build { background: var(--build-dim); color: var(--build); }
+    .pattern-bar-skip { background: var(--skip-dim); color: var(--skip); }
+    .pattern-bar-park { background: var(--park-dim); color: var(--park); }
+    .complexity-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .complexity-label {
+      font-family: var(--font-display);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      width: 20px;
+      text-align: right;
+    }
+    .complexity-bar-track {
+      flex: 1;
+      height: 16px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .complexity-bar-fill {
+      height: 100%;
+      background: var(--accent-dim);
+      border-right: 2px solid var(--accent);
+      transition: width 0.5s ease;
+    }
+    .complexity-stat {
+      font-size: 0.7rem;
+      color: var(--text-dim);
+      width: 60px;
+    }
+    .pattern-muted {
+      color: var(--text-dim);
+      font-size: 0.9rem;
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    /* ==== Ideas Visual Grid ==== */
+    .ideas-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+    .idea-card-visual {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      backdrop-filter: blur(12px);
+      transition: all 0.3s;
+      animation: fadeIn 0.3s ease-out;
+      display: flex;
+      flex-direction: column;
+    }
+    .idea-card-visual:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    }
+    .icv-thumb {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #0d0d0d;
+      overflow: hidden;
+    }
+    .icv-thumb img {
+      width: 100%; height: 100%;
+      object-fit: cover; display: block;
+      opacity: 0.85; transition: opacity 0.3s;
+    }
+    .idea-card-visual:hover .icv-thumb img { opacity: 1; }
+    .icv-thumb-fallback {
+      width: 100%; height: 100%;
+      display: flex; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, rgba(0,240,255,0.05) 0%, rgba(0,0,0,0.3) 100%);
+      font-size: 2.5rem; color: var(--text-dim);
+    }
+    .icv-verdict-badge {
+      position: absolute; top: 10px; left: 10px;
+      padding: 4px 12px; border-radius: 14px;
+      font-family: var(--font-display); font-weight: 700;
+      font-size: 0.7rem; letter-spacing: 0.5px;
+      backdrop-filter: blur(8px);
+    }
+    .icv-verdict-badge.vb-BUILD { background: rgba(0,255,136,0.2); color: var(--build); border: 1px solid rgba(0,255,136,0.4); }
+    .icv-verdict-badge.vb-SKIP { background: rgba(255,68,68,0.2); color: var(--skip); border: 1px solid rgba(255,68,68,0.4); }
+    .icv-verdict-badge.vb-PARK { background: rgba(255,170,0,0.2); color: var(--park); border: 1px solid rgba(255,170,0,0.4); }
+    .icv-score {
+      position: absolute; top: 10px; right: 10px;
+      padding: 4px 10px; border-radius: 14px;
+      font-family: var(--font-display); font-weight: 700; font-size: 0.7rem;
+      background: rgba(0,0,0,0.6); color: var(--text);
+      backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.1);
+    }
+    .icv-status-dots {
+      position: absolute; bottom: 10px; right: 10px;
+      display: flex; gap: 4px;
+    }
+    .icv-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      border: 1.5px solid var(--border);
+    }
+    .icv-dot.d-done { border-color: var(--build); background: var(--build); }
+    .icv-dot.d-run { border-color: var(--park); background: var(--park); animation: pulse 1.2s infinite; }
+    .icv-dot.d-fail { border-color: var(--skip); background: var(--skip); }
+    .icv-dot.d-wait { border-color: var(--text-dim); }
+    .icv-body {
+      padding: 14px 16px; flex: 1;
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .icv-title-row {
+      display: flex; align-items: flex-start; gap: 8px;
+    }
+    .icv-title-row input[type="checkbox"] {
+      accent-color: var(--accent); cursor: pointer;
+      margin-top: 3px; flex-shrink: 0;
+    }
+    .icv-title {
+      font-weight: 600; font-size: 0.9rem; line-height: 1.3;
+      display: -webkit-box; -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .icv-summary {
+      font-size: 0.78rem; color: var(--text-muted); line-height: 1.4;
+      display: -webkit-box; -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .icv-footer {
+      margin-top: auto; padding-top: 8px;
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between;
+      align-items: center; gap: 4px;
+    }
+    .icv-footer-actions { display: flex; gap: 4px; flex-wrap: wrap; }
+    .icv-footer-actions button {
+      padding: 4px 8px; background: transparent;
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      color: var(--text-dim); font-size: 0.68rem;
+      font-family: var(--font-display); cursor: pointer;
+      transition: all 0.2s;
+    }
+    .icv-footer-actions button:hover { border-color: var(--accent); color: var(--accent); }
+    .icv-delete {
+      background: none; border: none; color: var(--text-dim);
+      cursor: pointer; font-size: 0.9rem; padding: 2px;
+      transition: color 0.2s;
+    }
+    .icv-delete:hover { color: var(--skip); }
+
+    /* ==== Search Card with Thumbnail ==== */
+    .search-card-visual {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden; cursor: pointer;
+      transition: all 0.2s;
+      backdrop-filter: blur(12px);
+      position: relative;
+    }
+    .search-card-visual:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+    .search-card-visual.selected { border-color: var(--accent); background: var(--accent-dim); }
+    .scv-thumb {
+      position: relative; width: 100%;
+      aspect-ratio: 16 / 9; background: #0d0d0d; overflow: hidden;
+    }
+    .scv-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .scv-duration {
+      position: absolute; bottom: 6px; right: 6px;
+      background: rgba(0,0,0,0.8); color: var(--text);
+      font-family: var(--font-display); font-size: 0.65rem; font-weight: 700;
+      padding: 2px 6px; border-radius: 3px;
+    }
+    .scv-check {
+      position: absolute; top: 8px; right: 8px;
+      width: 22px; height: 22px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-radius: 4px; display: flex;
+      align-items: center; justify-content: center;
+      font-size: 13px; color: var(--accent);
+      background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+      transition: all 0.2s;
+    }
+    .search-card-visual.selected .scv-check { border-color: var(--accent); background: var(--accent-dim); }
+    .scv-body { padding: 10px 12px; }
+    .scv-title {
+      font-weight: 600; font-size: 0.85rem;
+      margin-bottom: 4px; line-height: 1.3;
+      display: -webkit-box; -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .scv-meta { font-size: 0.72rem; color: var(--text-muted); display: flex; gap: 8px; flex-wrap: wrap; }
+
+    /* ==== Research Mode ==== */
+    .research-brief {
+      width: 100%;
+      min-height: 80px;
+      padding: 14px 16px;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--accent);
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .research-brief:focus { border-color: var(--accent); }
+    .research-brief::placeholder { color: var(--text-dim); }
+    .research-status {
+      display: flex; align-items: center; gap: 10px;
+      padding: 14px 18px; margin: 16px 0;
+      background: rgba(0,0,0,0.3); border-radius: var(--radius-sm);
+      font-family: var(--font-display); font-size: 0.85rem;
+    }
+    .research-status .rs-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      animation: pulse 1.2s infinite;
+    }
+    .research-funnel {
+      display: flex; gap: 8px; align-items: center;
+      font-family: var(--font-display); font-size: 0.8rem;
+      color: var(--text-muted); margin: 12px 0;
+    }
+    .research-funnel span { color: var(--accent); font-weight: 700; }
+    .rr-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .rr-card:hover { border-color: var(--border-hover); transform: translateY(-2px); }
+    .rr-card.rr-selected { border-color: var(--accent); background: var(--accent-dim); }
+    .rr-thumb {
+      position: relative; width: 100%;
+      aspect-ratio: 16 / 9; background: #0d0d0d; overflow: hidden;
+    }
+    .rr-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .rr-score-badge {
+      position: absolute; top: 8px; left: 8px;
+      padding: 4px 12px; border-radius: 14px;
+      font-family: var(--font-display); font-weight: 700; font-size: 0.75rem;
+      backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.15);
+    }
+    .rr-score-high, .high { background: rgba(0,255,136,0.25); color: var(--build); border-color: rgba(0,255,136,0.4); }
+    .rr-score-mid, .mid { background: rgba(255,170,0,0.25); color: var(--park); border-color: rgba(255,170,0,0.4); }
+    .rr-score-low, .low { background: rgba(255,68,68,0.2); color: var(--skip); border-color: rgba(255,68,68,0.3); }
+    .rr-source-badge {
+      position: absolute; bottom: 8px; left: 8px;
+      padding: 2px 8px; border-radius: 10px;
+      font-size: 0.65rem; backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+    .rr-src-yt { background: rgba(255,0,0,0.3); color: #ff4444; }
+    .rr-src-web { background: rgba(0,136,255,0.3); color: #44aaff; }
+    .rr-check {
+      position: absolute; top: 8px; right: 8px;
+      width: 22px; height: 22px;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-radius: 4px; display: flex;
+      align-items: center; justify-content: center;
+      font-size: 13px; color: var(--accent);
+      background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+      cursor: pointer; transition: all 0.2s;
+    }
+    .rr-card.rr-selected .rr-check { border-color: var(--accent); background: var(--accent-dim); }
+    .rr-body { padding: 10px 14px; }
+    .rr-title {
+      font-weight: 600; font-size: 0.85rem; line-height: 1.3;
+      display: -webkit-box; -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical; overflow: hidden;
+      margin-bottom: 4px;
+    }
+    .rr-reason {
+      font-size: 0.75rem; color: var(--text-muted); line-height: 1.4;
+      margin-bottom: 6px;
+    }
+    .rr-meta { font-size: 0.7rem; color: var(--text-dim); display: flex; gap: 8px; flex-wrap: wrap; }
+    .rr-brain-note {
+      font-size: 0.7rem; color: var(--accent); opacity: 0.8;
+      margin-top: 4px; font-style: italic;
+    }
+    .rr-signals { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+    .rr-signal {
+      padding: 1px 6px; border-radius: 8px;
+      font-size: 0.6rem; font-weight: 700;
+      background: var(--accent-dim); color: var(--accent);
+      font-family: var(--font-display);
+    }
+    .research-actions {
+      display: flex; gap: 10px; align-items: center;
+      margin-top: 16px; flex-wrap: wrap;
+    }
+    .research-history-item {
+      padding: 12px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .research-history-item:hover { border-color: var(--border-hover); }
+
+    /* ==== Research Funnel (Insights) ==== */
+    .funnel-row {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 8px; font-family: var(--font-display); font-size: 0.85rem;
+    }
+    .funnel-label { width: 160px; color: var(--text-muted); text-align: right; flex-shrink: 0; }
+    .funnel-bar-wrap { flex: 1; height: 24px; background: var(--bg-glass); border-radius: 4px; overflow: hidden; }
+    .funnel-bar-fill { height: 100%; border-radius: 4px; transition: width 0.5s; min-width: 2px; }
+    .funnel-bar-fill.fb-candidates { background: var(--accent); }
+    .funnel-bar-fill.fb-above { background: var(--park); }
+    .funnel-bar-fill.fb-ingested { background: var(--build); }
+    .funnel-bar-fill.fb-build { background: #22d3ee; }
+    .funnel-bar-fill.fb-shipped { background: #a78bfa; }
+    .funnel-value { width: 80px; font-size: 0.8rem; color: var(--text-dim); }
+    .topic-row {
+      display: flex; align-items: center; gap: 12px; padding: 8px 0;
+      border-bottom: 1px solid var(--border); font-size: 0.85rem;
+    }
+    .topic-row:last-child { border-bottom: none; }
+    .topic-name { width: 200px; font-weight: 600; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .topic-bar-wrap { flex: 1; height: 16px; background: var(--bg-glass); border-radius: 4px; overflow: hidden; }
+    .topic-bar-fill { height: 100%; background: var(--build); border-radius: 4px; }
+    .topic-stats { width: 120px; font-family: var(--font-display); font-size: 0.75rem; color: var(--text-dim); text-align: right; }
+    .saved-briefs-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .brief-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border-radius: 20px;
+      background: var(--bg-glass); border: 1px solid var(--border);
+      font-family: var(--font-display); font-size: 0.78rem; color: var(--text-muted);
+      cursor: pointer; transition: all 0.2s;
+    }
+    .brief-chip:hover { border-color: var(--accent); color: var(--accent); }
+    .brief-chip .bc-runs { font-size: 0.7rem; color: var(--text-dim); }
+    .brief-chip .bc-radar { color: var(--build); font-size: 0.65rem; }
+
+    /* ==== Ideas Toolbar ==== */
+    .ideas-toolbar {
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 12px;
+      margin-bottom: 16px; flex-wrap: wrap;
+    }
+    .ideas-toolbar h2 { font-family: var(--font-display); font-size: 1rem; color: var(--accent); }
+    .ideas-count { font-family: var(--font-display); font-size: 0.75rem; color: var(--text-muted); margin-left: 8px; }
+    .ideas-filters { display: flex; gap: 6px; align-items: center; }
+    .filter-chip {
+      padding: 5px 12px; background: transparent;
+      border: 1px solid var(--border); border-radius: 16px;
+      color: var(--text-muted); font-family: var(--font-display);
+      font-size: 0.7rem; font-weight: 700; cursor: pointer;
+      transition: all 0.2s;
+    }
+    .filter-chip:hover { border-color: var(--accent); color: var(--accent); }
+    .filter-chip.active { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+    .filter-chip.fc-build.active { border-color: var(--build); color: var(--build); background: var(--build-dim); }
+    .filter-chip.fc-skip.active { border-color: var(--skip); color: var(--skip); background: var(--skip-dim); }
+    .filter-chip.fc-park.active { border-color: var(--park); color: var(--park); background: var(--park-dim); }
+
+    /* ---- Responsive ---- */
+    @media (min-width: 1281px) {
+      .section-inner { padding: 0 40px; }
+      .ideas-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+    }
+    @media (min-width: 641px) and (max-width: 1024px) {
+      .ideas-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+      .pipeline-view { max-width: 100%; }
+    }
+
+    /* ==== FORGE MAP (Command Palette) ==== */
+    .forge-map {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.92);
+      backdrop-filter: blur(20px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+      animation: fmFadeIn 0.25s ease-out;
+    }
+    .forge-map.open { display: flex; }
+    @keyframes fmFadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .forge-map-inner {
+      width: min(960px, 94vw);
+      max-height: 88vh;
+      overflow-y: auto;
+      padding: 32px;
+      scrollbar-width: thin;
+      scrollbar-color: var(--border) transparent;
+    }
+    .fm-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+    .fm-title {
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .fm-title-icon {
+      font-size: 1.1rem;
+      animation: fmSpin 8s linear infinite;
+    }
+    @keyframes fmSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .fm-shortcut {
+      font-size: 0.65rem;
+      padding: 2px 8px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text-dim);
+    }
+    .fm-close {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-muted);
+      font-size: 1.2rem;
+      padding: 6px 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .fm-close:hover { border-color: var(--accent); color: var(--accent); }
+    .fm-search-row { margin-bottom: 28px; }
+    .fm-search-row input {
+      width: 100%;
+      padding: 12px 18px;
+      background: rgba(0,0,0,0.5);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--accent);
+      font-family: var(--font-display);
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .fm-search-row input:focus { border-color: var(--accent); }
+    .fm-search-row input::placeholder { color: var(--text-dim); }
+    .fm-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .fm-cluster {
+      grid-column: 1 / -1;
+      font-family: var(--font-display);
+      font-size: 0.68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--text-dim);
+      padding: 12px 0 4px;
+      border-bottom: 1px solid rgba(0,240,255,0.08);
+      margin-top: 4px;
+    }
+    .fm-cluster:first-child { margin-top: 0; }
+    .fm-node {
+      padding: 16px;
+      background: rgba(0,240,255,0.03);
+      border: 1px solid rgba(0,240,255,0.08);
+      border-radius: var(--radius);
+      cursor: default;
+      transition: all 0.3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .fm-node::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .fm-node:hover {
+      border-color: rgba(0,240,255,0.3);
+      background: rgba(0,240,255,0.06);
+      transform: translateY(-2px);
+    }
+    .fm-node:hover::before { opacity: 1; }
+    .fm-node-icon { font-size: 1.4rem; margin-bottom: 8px; display: block; }
+    .fm-node-name {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.82rem;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .fm-node-desc { font-size: 0.75rem; color: var(--text-muted); line-height: 1.4; }
+    .fm-node-key {
+      display: inline-block;
+      margin-top: 8px;
+      font-family: var(--font-display);
+      font-size: 0.6rem;
+      padding: 2px 6px;
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--text-dim);
+    }
+    .fm-trigger {
+      background: none;
+      border: 1px solid rgba(0,240,255,0.2);
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      color: var(--accent);
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      opacity: 0.4;
+      vertical-align: middle;
+      margin-left: 10px;
+    }
+    .fm-trigger:hover { opacity: 1; border-color: var(--accent); box-shadow: 0 0 12px rgba(0,240,255,0.2); }
+    .fm-footer {
+      text-align: center;
+      margin-top: 28px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    .fm-footer-hint { font-size: 0.72rem; color: var(--text-dim); }
+    .fm-footer-hint kbd {
+      display: inline-block;
+      padding: 1px 6px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      font-family: var(--font-display);
+      font-size: 0.65rem;
+    }
+
+    /* ==== Whisper Hints ==== */
+    @keyframes whisperShimmer {
+      0% { background-position: 100% 0; }
+      100% { background-position: -100% 0; }
+    }
+    .micro-hint {
+      position: absolute;
+      background: var(--bg-card-solid);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 0.78rem;
+      color: var(--text);
+      max-width: 240px;
+      z-index: 80;
+      box-shadow: 0 4px 20px rgba(0,240,255,0.15);
+      animation: microHintIn 0.4s ease-out;
+      pointer-events: auto;
+    }
+    .micro-hint::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 20px;
+      width: 12px;
+      height: 12px;
+      background: var(--bg-card-solid);
+      border-right: 1px solid var(--accent);
+      border-bottom: 1px solid var(--accent);
+      transform: rotate(45deg);
+    }
+    .micro-hint-dismiss {
+      display: block;
+      margin-top: 6px;
+      font-family: var(--font-display);
+      font-size: 0.65rem;
+      color: var(--text-dim);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+    }
+    .micro-hint-dismiss:hover { color: var(--accent); }
+    @keyframes microHintIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ==== Feature Discovery Glow ==== */
+    .discovery-glow { position: relative; }
+    .discovery-glow::after {
+      content: '';
+      position: absolute;
+      inset: -3px;
+      border-radius: inherit;
+      border: 2px solid var(--accent);
+      opacity: 0;
+      animation: discoveryPulse 2.5s ease-in-out infinite;
+      pointer-events: none;
+      z-index: 1;
+    }
+    @keyframes discoveryPulse {
+      0%, 100% { opacity: 0; box-shadow: 0 0 0px rgba(0,240,255,0); }
+      50% { opacity: 0.7; box-shadow: 0 0 15px rgba(0,240,255,0.3); }
+    }
+    .discovery-glow.main-tab::after { content: none; }
+
+    /* ==== Smart Empty State ==== */
+    .empty-showcase {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 40px 0;
+    }
+    .showcase-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 20px;
+      backdrop-filter: blur(12px);
+      transition: all 0.3s;
+      cursor: default;
+      overflow: hidden;
+      position: relative;
+    }
+    .showcase-card:hover {
+      border-color: rgba(0,240,255,0.25);
+      transform: translateY(-2px);
+    }
+    .showcase-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      opacity: 0.3;
+    }
+    .sc-icon { font-size: 1.8rem; margin-bottom: 12px; display: block; }
+    .sc-label {
+      font-family: var(--font-display);
+      font-weight: 700;
+      font-size: 0.85rem;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .sc-detail { font-size: 0.78rem; color: var(--text-muted); line-height: 1.5; }
+    .sc-demo {
+      margin-top: 12px;
+      padding: 10px;
+      background: rgba(0,0,0,0.4);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-display);
+      font-size: 0.7rem;
+      overflow: hidden;
+      height: 36px;
+    }
+    .sc-demo-typing {
+      color: var(--accent);
+      border-right: 2px solid var(--accent);
+      animation: scBlink 0.8s step-end infinite;
+      white-space: nowrap;
+      overflow: hidden;
+      display: inline-block;
+    }
+    @keyframes scBlink { 0%,100% { border-color: var(--accent); } 50% { border-color: transparent; } }
+    .sc-demo-verdict { display: flex; gap: 8px; align-items: center; }
+    .sc-demo-verdict span {
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.65rem;
+      font-weight: 700;
+    }
+    .empty-showcase-cta {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding-top: 8px;
+    }
+    .empty-showcase-cta p { color: var(--text-dim); font-size: 0.85rem; }
+    .empty-showcase-cta strong { color: var(--text); }
+
+    /* ==== Floating Hint Bar ==== */
+    .hint-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      padding: 8px 24px;
+      background: linear-gradient(180deg, transparent, rgba(0,0,0,0.7));
+      text-align: center;
+      font-family: var(--font-display);
+      font-size: 0.72rem;
+      color: var(--text-dim);
+      z-index: 85;
+      transition: all 0.4s ease;
+      pointer-events: none;
+      opacity: 0;
+    }
+    .hint-bar.visible { opacity: 1; }
+    .hint-bar.shifted { bottom: 70px; }
+    .hint-bar-accent { color: var(--accent); }
+
+    @media (max-width: 640px) {
+      .hero { padding: 24px 16px 20px; }
+      .hero h1 { font-size: 1.4rem; }
+      .input-group { flex-direction: column; }
+      .stepper { flex-direction: column; gap: 8px; }
+      .step-arrow { transform: rotate(90deg); padding: 4px 0; }
+      .ic-actions { flex-direction: column; }
+      .search-grid { grid-template-columns: 1fr; }
+      .selection-bar { left: 16px; right: 16px; transform: none; flex-wrap: wrap; }
+      .forge-map-inner { padding: 16px; }
+      .fm-grid { grid-template-columns: 1fr; gap: 12px; }
+      .fm-trigger { display: none; }
+      .empty-showcase { grid-template-columns: 1fr; }
+      .hint-bar { font-size: 0.65rem; padding: 6px 16px; }
+      .hint-bar.shifted { bottom: 80px; }
+      .ideas-grid { grid-template-columns: 1fr; }
+      .ideas-toolbar { flex-direction: column; align-items: flex-start; }
+    }
+
+    /* Idea Harvest surfaces and scale; Notebook Ideas' labelled detail layout. */
+    :root { color-scheme: dark; --radius: 12px; }
+    body { font-size: 14px; line-height: 1.55; }
+    .hero { background: var(--bg-card); }
+    .hero h1 { font-family: var(--font-body); font-size: 24px; letter-spacing: -.02em; }
+    .section-inner { max-width: 1180px; padding: 0 22px; }
+    .page-filters, .factory-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .page-filters { padding: 14px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg-card); }
+    .page-filters label { display: inline-flex; align-items: center; gap: 6px; }
+    .page-filters select { max-width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-input); color: var(--text); }
+    .factory-actions p { flex-basis: 100%; }
+    button[aria-pressed="true"] { background: var(--accent); color: white; }
+    .btn-secondary { font: 600 11.5px/1.4 ui-monospace, monospace; border-radius: 8px; padding: 9px 12px; }
+    .ideas-grid, .scout-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 14px; }
+    .scout-grid { margin-top: 12px; }
+    .scout-card, .idea-card-visual { min-width: 0; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; box-shadow: none; overflow-wrap: anywhere; }
+    .scout-card { padding: 14px 16px; }
+    .scout-card h3, .icv-title, .icv-body h3 { font: 600 14.5px/1.5 var(--font-body); letter-spacing: -.01em; }
+    .icv-title { display: block; -webkit-line-clamp: unset; }
+    .icv-thumb { height: 110px; }
+    .icv-body { padding: 14px 16px; gap: 12px; }
+    .idea-details, .scout-card dl { font-size: 12.5px; color: var(--text-muted); }
+    dt { font-weight: 600; color: var(--text); margin-top: 9px; }
+    dd { margin: 2px 0 8px; white-space: pre-wrap; }
+    .icv-footer { flex-wrap: wrap; }
+    .section-note { color: var(--text-muted); font-size: 13px; }
+    @media (max-width: 640px) {
+      .section-inner { padding: 0 16px; }
+      .main-tabs, .ideas-filters { flex-wrap: wrap; }
+      .page-filters > *, .input-group > * { min-width: 0; max-width: 100%; }
+      .page-filters button { white-space: normal; }
+      .scout-grid, .ideas-grid { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    body { padding-bottom: 80px; }
+    .main-tab:focus:not(:focus-visible) { outline: none; }
+    .main-tab:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+    #scout-summary { cursor: pointer; overflow-wrap: anywhere; }
+    .card-summary, .icv-title, #hub-cards h3 { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
+    .card-source { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-details summary { cursor: pointer; }
+    .model-table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+    .model-table th, .model-table td { text-align: left; padding: 8px; border-bottom: 1px solid var(--border); overflow-wrap: anywhere; }
+    #ideas-more, #hub-more { margin-top: 16px; }
+    @media (max-width: 600px) {
+      .hint-bar { display: none; }
+      .card-summary { -webkit-line-clamp: 1; }
+      .icv-thumb { height: 48px; min-height: 48px; }
+      .icv-body { padding: 12px; gap: 4px; }
+      .icv-body > .idea-details { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 8px; margin: 0; }
+      .icv-body > .idea-details dt, .icv-body > .idea-details dd { margin: 0; }
+      .factory-actions { gap: 4px; margin: 0; }
+      .factory-actions button { padding: 4px 6px; }
+    }
+</style>
+</head>
+<body>
+
+<!-- ===== HERO ===== -->
+<header class="hero">
+  <div class="hero-inner">
+    <h1>IdeaForge <button class="fm-trigger" onclick="openForgeMap()" title="Forge Map (press ?)">&#9670;</button></h1>
+    <p class="hero-sub">
+      Paste a YouTube URL &rarr; Get a <strong style="color:var(--build)">BUILD</strong> /
+      <strong style="color:var(--skip)">SKIP</strong> /
+      <strong style="color:var(--park)">PARK</strong> verdict<br/>
+      + a paste-ready project spec for Claude Code
+    </p>
+    <div class="input-group">
+      <input id="input" type="text" placeholder="YouTube URL, PDF path, RSS feed, or search..." autocomplete="off"/>
+      <button class="btn-primary" id="btn-main" onclick="handleSubmit()">&#9654; Run Pipeline</button>
+    </div>
+    <div class="input-alt">
+      <button class="btn-secondary" id="btn-extract" onclick="handleExtractOnly()">Extract Only</button>
+    </div>
+    <div class="preflight" id="preflight"></div>
+  </div>
+</header>
+
+<!-- ===== MAIN NAV ===== -->
+<nav class="main-tabs">
+  <button class="main-tab active" data-view="ideas" onclick="switchView('ideas')">Ideas</button>
+  <button class="main-tab" data-view="pipeline" onclick="switchView('pipeline')">Pipeline</button>
+  <button class="main-tab" data-view="research" onclick="switchView('research')">Research</button>
+  <button class="main-tab" data-view="radar" onclick="switchView('radar')">Radar</button>
+  <button class="main-tab" data-view="outcomes" onclick="switchView('outcomes')">Outcomes</button>
+  <button class="main-tab" data-view="insights" onclick="switchView('insights')">Insights</button>
+</nav>
+
+<!-- ===== IDEAS VIEW ===== -->
+<div id="view-ideas">
+
+<!-- ===== SEARCH RESULTS ===== -->
+<section id="search-section" class="section hidden">
+  <div class="section-inner">
+    <div class="section-head">
+      <h2 id="search-heading">Search Results</h2>
+      <div style="display:flex;gap:8px;">
+        <button class="btn-secondary" onclick="ingestSelected(false)">Extract Selected</button>
+        <button class="btn-primary" style="font-size:0.8rem;padding:8px 16px;" onclick="ingestSelected(true)">&#9654; Pipeline Selected</button>
+        <button class="btn-secondary" onclick="closeSearch()">&#10005; Close</button>
+      </div>
+    </div>
+    <div id="search-results" class="search-grid"></div>
+  </div>
+</section>
+
+<section class="section"><div class="section-inner">    <div id="page-filters" class="page-filters" aria-label="Idea filters">
+      <label>Source <select id="hub-source" onchange="renderAllCards()"><option value="">All sources</option></select></label>
+      <label>Verdict <select id="verdict-filter" onchange="filterIdeas(this.value)">
+        <option value="all">All verdicts</option><option>BUILD</option><option>PARK</option><option>SKIP</option><option value="pending">Not evaluated</option>
+      </select></label>
+      <label><input id="only-favourites" type="checkbox" onchange="renderAllCards()"> Favourites</label>
+      <label><input id="only-sent" type="checkbox" onchange="renderAllCards()"> Sent</label>
+      <label><input id="show-dismissed" type="checkbox" onchange="renderAllCards()"> Include dismissed</label>
+      <button class="btn-secondary" onclick="exportMarkdown()">Download favourites as Markdown</button>
+    </div>
+</div></section>
+<!-- ===== IDEAS ===== -->
+<section id="ideas-section" class="section">
+  <div class="section-inner">
+    <div id="ideas-toolbar" class="ideas-toolbar hidden"><h2>Evaluated ideas and videos</h2><span class="ideas-count" id="ideas-count"></span></div>
+    <div id="empty-state"></div>
+    <div id="ideas-list" class="ideas-grid"></div>
+    <button id="ideas-more" class="btn-secondary hidden" onclick="showMoreIdeas()">Show more ideas</button>
+  </div>
+</section>
+
+<section id="hub-section" class="section">
+  <div class="section-inner">
+    <div class="ideas-toolbar">
+      <h2>Collected ideas</h2>
+      <button class="btn-secondary" id="hub-sync" onclick="syncHub()">Sync collectors</button>
+    </div>
+    <p id="hub-sync-result" role="status">Videos enter the existing pipeline. Other sources remain review cards.</p>
+    <div id="hub-cards" class="ideas-grid"></div>
+    <button id="hub-more" class="btn-secondary hidden" onclick="showMoreHubCards()">Show more collected ideas</button>
+  </div>
+</section>
+
+<section id="scout-panel" class="section" aria-label="Product Scout">
+  <div class="section-inner"><details id="scout-details">
+    <summary id="scout-summary">Product Scout · Loading latest run…</summary>
+    <p class="section-note">Latest runs and recorded product state. Read-only evidence.</p>
+    <div id="scout-runs" class="scout-grid">Loading Scout history…</div>
+  </details></div>
+</section>
+
+<!-- ===== NOTEBOOKS / NLM PANEL ===== -->
+<section id="notebooks-section" class="section">
+  <div class="section-inner">
+    <div class="nb-panel">
+      <div class="nb-panel-header">
+        <h2>📓 NotebookLM</h2>
+        <div id="nlm-auth" class="nb-auth auth-fail">
+          <span class="nb-auth-dot"></span>
+          <span id="nlm-auth-text">Checking…</span>
+        </div>
+      </div>
+      <div id="nlm-install-hint" class="nlm-install-hint hidden">
+        NotebookLM CLI not installed. Run: <code>pip install "notebooklm-py[browser]"</code> then <code>notebooklm login</code>
+      </div>
+      <div id="notebooks-list"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SELECTION BAR ===== -->
+<div id="selection-bar" class="selection-bar hidden">
+  <span class="sb-count" id="sb-count">0 selected</span>
+  <button class="btn-secondary" onclick="createNotebookFromSelected()">📓 Create NLM Notebook</button>
+  <button class="btn-secondary" onclick="clearSelection()">Clear</button>
+</div>
+
+</div><!-- /view-ideas -->
+
+<!-- ===== PIPELINE VIEW ===== -->
+<div id="view-pipeline" class="hidden">
+  <div class="pipeline-view">
+    <div class="wizard-bar" id="wizard-bar"></div>
+
+    <!-- Step 1: Source -->
+    <div id="ps-source" class="ps">
+      <div class="pipe-header">
+        <h2>Build Your Pipeline</h2>
+        <p>Search YouTube or paste URLs, name your notebook, run the full pipeline in one shot.</p>
+      </div>
+      <div style="margin-bottom:16px;">
+        <label style="font-family:var(--font-display);font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:6px;">Notebook Name</label>
+        <input id="pipe-nb-name" type="text" style="width:100%;padding:12px 16px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--accent);font-family:var(--font-display);font-size:0.9rem;outline:none;"/>
+      </div>
+      <div class="input-group">
+        <input id="pipe-input" type="text" placeholder="Search YouTube or paste a URL..." autocomplete="off"/>
+        <button class="btn-primary" id="pipe-btn-search" onclick="pipeSearch()">Search</button>
+      </div>
+      <div style="margin-top:8px;">
+        <button class="btn-secondary" onclick="document.getElementById('pipe-bulk').classList.toggle('hidden')">Paste Multiple URLs</button>
+      </div>
+      <div id="pipe-bulk" class="hidden" style="margin-top:10px;">
+        <textarea id="pipe-bulk-ta" style="width:100%;height:100px;padding:12px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--accent);font-family:var(--font-display);font-size:0.8rem;resize:vertical;" placeholder="Paste YouTube URLs, one per line..."></textarea>
+        <button class="btn-secondary" style="margin-top:6px;" onclick="pipeAddBulk()">Add URLs</button>
+      </div>
+      <div id="pipe-search-grid" class="search-grid hidden" style="margin-top:16px;"></div>
+      <div id="pipe-sel-hdr" class="hidden" style="margin-top:20px;">
+        <h3 style="font-family:var(--font-display);font-size:0.85rem;color:var(--accent);">Selected Videos (<span id="pipe-sel-n">0</span>)</h3>
+      </div>
+      <div id="pipe-sel-chips" class="url-chips"></div>
+      <div id="pipe-run-row" class="hidden" style="margin-top:24px;text-align:center;">
+        <button class="btn-primary" style="font-size:1rem;padding:16px 40px;" onclick="pipeRun()">&#9654; Run Pipeline</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Processing -->
+    <div id="ps-processing" class="ps hidden">
+      <div class="pipe-header"><h2>Processing...</h2></div>
+      <div class="progress-overall">
+        <span id="pipe-prog-lbl" style="font-family:var(--font-display);font-size:0.85rem;color:var(--text-muted);">0 of 0 complete</span>
+        <div class="progress-bar-track"><div id="pipe-prog-fill" class="progress-bar-fill" style="width:0%"></div></div>
+      </div>
+      <div id="pipe-vid-list"></div>
+    </div>
+
+    <!-- Step 3: Results -->
+    <div id="ps-results" class="ps hidden">
+      <div class="pipe-header"><h2>Pipeline Results</h2></div>
+      <div id="pipe-res-summary"></div>
+      <div id="pipe-res-grid" class="results-grid"></div>
+    </div>
+
+    <!-- Step 4: Generate -->
+    <div id="ps-generate" class="ps hidden">
+      <div class="pipe-header">
+        <h2>Generate Output</h2>
+        <p>Your notebook is ready. Generate a podcast or report from the collected transcripts.</p>
+      </div>
+      <div id="pipe-gen-body"></div>
+    </div>
+
+    <!-- Step 5: Done -->
+    <div id="ps-done" class="ps hidden">
+      <div class="pipe-header"><h2>Pipeline Complete</h2></div>
+      <div id="pipe-done-body"></div>
+      <div style="text-align:center;margin-top:24px;">
+        <button class="btn-primary" onclick="pipeReset()">Start New Pipeline</button>
+        <button class="btn-secondary" style="margin-left:12px;" onclick="switchView('ideas')">View Ideas</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== RADAR VIEW ===== -->
+<div id="view-radar" class="hidden">
+  <div class="pipeline-view">
+    <div class="pipe-header">
+      <h2>Radar Subscriptions</h2>
+      <p>Subscribe to YouTube channels, search queries, or RSS feeds. New content is scanned automatically.</p>
+    </div>
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px;">
+      <div style="display:grid;grid-template-columns:1fr 150px 1fr;gap:10px;align-items:end;">
+        <div>
+          <label style="font-family:var(--font-display);font-size:0.75rem;color:var(--text-muted);display:block;margin-bottom:4px;">Name</label>
+          <input id="sub-name" type="text" placeholder="My subscription" style="width:100%;padding:10px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:0.85rem;"/>
+        </div>
+        <div>
+          <label style="font-family:var(--font-display);font-size:0.75rem;color:var(--text-muted);display:block;margin-bottom:4px;">Type</label>
+          <select id="sub-kind" style="width:100%;padding:10px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:0.85rem;">
+            <option value="youtube_search">YouTube Search</option>
+            <option value="youtube_channel">YouTube Channel</option>
+            <option value="rss_feed">RSS Feed</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-family:var(--font-display);font-size:0.75rem;color:var(--text-muted);display:block;margin-bottom:4px;">Target (query / URL)</label>
+          <input id="sub-target" type="text" placeholder="AI agent framework 2026" style="width:100%;padding:10px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:0.85rem;"/>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:end;margin-top:10px;">
+        <div>
+          <label style="font-family:var(--font-display);font-size:0.75rem;color:var(--text-muted);display:block;margin-bottom:4px;">Frequency</label>
+          <select id="sub-freq" style="padding:10px;background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:0.85rem;">
+            <option value="6">Every 6h</option>
+            <option value="12">Every 12h</option>
+            <option value="24" selected>Daily</option>
+            <option value="168">Weekly</option>
+          </select>
+        </div>
+        <button class="btn-primary" style="padding:10px 20px;" onclick="createSubscription()">Add Subscription</button>
+      </div>
+    </div>
+    <div id="sub-list"></div>
+  </div>
+</div>
+
+<!-- ===== RESEARCH VIEW ===== -->
+<div id="view-research" class="hidden">
+  <div class="pipeline-view">
+    <div class="pipe-header">
+      <h2>Research Mode</h2>
+      <p>Describe what you want to research. The AI planner creates search queries, retrieves candidates, and ranks them against your founder brain.</p>
+    </div>
+    <div id="saved-briefs-section" class="hidden" style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <h3 style="font-family:var(--font-display);font-size:0.8rem;color:var(--text-muted);margin:0;">Saved Briefs</h3>
+      </div>
+      <div id="saved-briefs-bar" class="saved-briefs-bar"></div>
+    </div>
+    <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px;">
+      <label style="font-family:var(--font-display);font-size:0.8rem;color:var(--text-muted);display:block;margin-bottom:6px;">Research Brief</label>
+      <textarea id="research-brief" class="research-brief" placeholder="Find videos about Claude Code agent teams and subagents for solo developers, published in 2026, at least 15 minutes, English preferred. Focus on practical builds, not enterprise demos."></textarea>
+      <div style="display:flex;gap:10px;margin-top:12px;align-items:center;flex-wrap:wrap;">
+        <button class="btn-primary" id="research-run-btn" onclick="runResearch('youtube')">Search YouTube</button>
+        <button class="btn-secondary" id="research-web-btn" onclick="runResearch('web')">Search Web</button>
+        <button class="btn-secondary" id="research-hybrid-btn" onclick="runResearch('hybrid')">Hybrid</button>
+        <span id="research-run-status" style="font-family:var(--font-display);font-size:0.8rem;color:var(--text-dim);"></span>
+      </div>
+    </div>
+
+    <div id="research-active" class="hidden">
+      <div id="research-status-bar" class="research-status hidden">
+        <span class="rs-dot" style="background:var(--park);"></span>
+        <span id="research-status-text">Planning...</span>
+      </div>
+      <div id="research-funnel-bar" class="research-funnel hidden"></div>
+      <div id="research-results-grid" class="search-grid" style="margin-top:16px;"></div>
+      <div id="research-actions-bar" class="research-actions hidden">
+        <button class="btn-primary" style="font-size:0.85rem;padding:10px 20px;" onclick="ingestResearchSelected()">Ingest Selected into Ideas</button>
+        <button class="btn-secondary" onclick="selectAllResearch()">Select All Above Threshold</button>
+        <button class="btn-secondary" onclick="clearResearchSelection()">Clear Selection</button>
+        <button class="btn-secondary" onclick="saveResearchBrief()">Save as Brief</button>
+        <button class="btn-secondary" id="save-radar-btn" class="hidden" onclick="saveResearchAsRadar()">Save as Radar</button>
+        <span id="research-sel-count" style="font-family:var(--font-display);font-size:0.8rem;color:var(--accent);"></span>
+      </div>
+    </div>
+
+    <div id="research-history" style="margin-top:24px;">
+      <h3 style="font-family:var(--font-display);font-size:0.9rem;color:var(--text-muted);margin-bottom:12px;">Recent Research Runs</h3>
+      <div id="research-history-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== INSIGHTS VIEW ===== -->
+<div id="view-insights" class="hidden">
+  <div class="pipeline-view">
+    <div class="pipe-header">
+      <h2>Insights</h2>
+      <p>Patterns from your evaluation history and exportable founder brain.</p>
+    </div>
+    <div id="evaluation-models"></div>
+    <div id="patterns-section"></div>
+    <div id="research-funnel-section" style="margin-top:24px;"></div>
+    <div id="topic-performance-section" style="margin-top:24px;"></div>
+    <div id="complexity-thresholds-section" style="margin-top:24px;"></div>
+    <div id="brain-section" style="margin-top:24px;"></div>
+  </div>
+</div>
+
+<!-- ===== OUTCOMES VIEW ===== -->
+<div id="view-outcomes" class="hidden">
+  <div class="pipeline-view">
+    <div class="pipe-header">
+      <h2>Log Outcomes</h2>
+      <p>Track what happened to your evaluated ideas. Logging outcomes improves calibration accuracy.</p>
+      <div id="outcome-progress" style="margin-top:16px;"></div>
+    </div>
+    <div id="outcomes-list" style="margin-top:24px;"></div>
+  </div>
+</div>
+
+<!-- ===== MODAL ===== -->
+<div id="modal" class="modal" onclick="if(event.target===this)hideModal()">
+  <div class="modal-inner" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h2 id="modal-title">Details</h2>
+      <button class="btn-secondary" onclick="hideModal()">&#10005; Close</button>
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-tab="transcript" onclick="switchTab('transcript')">Transcript</button>
+      <button class="tab" data-tab="evaluation" onclick="switchTab('evaluation')">Evaluation</button>
+      <button class="tab" data-tab="instruction" onclick="switchTab('instruction')">Build Spec</button>
+      <button class="tab" data-tab="events" onclick="switchTab('events')">Event Log</button>
+    </div>
+    <div class="tab-content">
+      <div id="pane-transcript" class="tab-pane active">
+        <p class="tab-desc">Raw text extracted from the video's subtitles</p>
+        <div class="tab-actions"><button class="btn-secondary" onclick="copySection('transcript')">Copy</button></div>
+        <pre id="pre-transcript"></pre>
+      </div>
+      <div id="pane-evaluation" class="tab-pane">
+        <p class="tab-desc">AI analysis of whether this idea fits your profile</p>
+        <div class="tab-actions"><button class="btn-secondary" onclick="copySection('evaluation')">Copy</button></div>
+        <pre id="pre-evaluation"></pre>
+      </div>
+      <div id="pane-instruction" class="tab-pane">
+        <p class="tab-desc">Paste-ready implementation plan for Claude Code</p>
+        <div class="tab-actions"><button class="btn-primary" style="font-size:0.75rem;padding:6px 14px;" onclick="copyForClaudeCode()">Copy for Claude Code</button></div>
+        <pre id="pre-instruction"></pre>
+      </div>
+      <div id="pane-events" class="tab-pane">
+        <p class="tab-desc">Processing timeline &mdash; what happened and when</p>
+        <pre id="pre-events"></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<!-- ===== FORGE MAP ===== -->
+<div id="forge-map" class="forge-map" onclick="if(event.target===this)closeForgeMap()">
+  <div class="forge-map-inner">
+    <div class="fm-header">
+      <div class="fm-title">
+        <span class="fm-title-icon">&#9670;</span> Forge Map
+        <span class="fm-shortcut">?</span>
+      </div>
+      <button class="fm-close" onclick="closeForgeMap()">&times;</button>
+    </div>
+    <div class="fm-search-row">
+      <input id="fm-search" type="text" placeholder="Search capabilities..." autocomplete="off"/>
+    </div>
+    <div class="fm-grid" id="fm-grid"></div>
+    <div class="fm-footer">
+      <span class="fm-footer-hint">Press <kbd>?</kbd> to toggle &middot; <kbd>Esc</kbd> to close</span>
+    </div>
+  </div>
+</div>
+
+<!-- ===== HINT BAR ===== -->
+<div id="hint-bar" class="hint-bar">
+  <span id="hint-bar-text"></span>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+/* ---- State ---- */
+let currentIdeaId = null;
+let pendingJobs = {};
+let selectedSearch = new Set();
+let selectedIdeas = new Set();
+let ideaCache = [];
+let nlmAvailable = false;
+let nlmAuth = {installed: false, authenticated: false};
+let chatAnswers = {};  // nlm_id -> last answer
+let activeFilter = 'all';
+
+function extractVideoId(url) {
+  if (!url) return null;
+  var m = url.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
+  if (m) return m[1];
+  m = url.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
+  if (m) return m[1];
+  m = url.match(/\/embed\/([a-zA-Z0-9_-]{11})/);
+  if (m) return m[1];
+  m = url.match(/\/shorts\/([a-zA-Z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+
+function thumbnailUrl(url, quality) {
+  var vid = extractVideoId(url);
+  if (!vid) return null;
+  return 'https://img.youtube.com/vi/' + vid + '/' + (quality || 'mqdefault') + '.jpg';
+}
+
+function filterIdeas(filter) {
+  activeFilter = filter;
+  document.querySelectorAll('.filter-chip').forEach(function(c) {
+    c.classList.toggle('active', c.dataset.filter === filter);
+  });
+  renderAllCards();
+}
+
+const COMPLEXITY = ['','Low','Moderate','Medium','High','Very High'];
+const GEN_TYPES = [
+  {id: 'audio', icon: '🎙️', label: 'Podcast'},
+  {id: 'video', icon: '🎬', label: 'Video'},
+  {id: 'quiz', icon: '❓', label: 'Quiz'},
+  {id: 'mind-map', icon: '🧠', label: 'Mind Map'},
+  {id: 'slide-deck', icon: '📊', label: 'Slides'}
+];
+
+/* ---- Init ---- */
+document.addEventListener('DOMContentLoaded', () => {
+  preflight();
+  loadIdeas();
+  loadNotebooks();
+  checkNlmAuth();
+
+  const inp = document.getElementById('input');
+  inp.addEventListener('input', () => {
+    const btn = document.getElementById('btn-main');
+    const extract = document.getElementById('btn-extract');
+    var v = inp.value.trim();
+    if (isDirectSource(v)) {
+      btn.innerHTML = '&#9654; Run Pipeline';
+      extract.classList.remove('hidden');
+    } else if (v.length > 0) {
+      btn.innerHTML = '&#128269; Search YouTube';
+      extract.classList.add('hidden');
+    } else {
+      btn.innerHTML = '&#9654; Run Pipeline';
+      extract.classList.remove('hidden');
+    }
+  });
+
+  inp.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') handleSubmit();
+  });
+
+  /* Pipeline tab init */
+  var pipeInp = document.getElementById('pipe-input');
+  if (pipeInp) pipeInp.addEventListener('keydown', function(e) { if (e.key === 'Enter') pipeSearch(); });
+  var pipeNb = document.getElementById('pipe-nb-name');
+  if (pipeNb) pipeNb.value = 'Pipeline ' + new Date().toISOString().slice(0,10);
+
+  /* Discovery layer init */
+  initWhisperHints();
+  initDiscoveryGlow();
+  updateHintBar();
+});
+
+setInterval(loadIdeas, 3000);
+setInterval(loadNotebooks, 5000);
+setInterval(checkNlmAuth, 30000);
+
+/* ---- API ---- */
+async function preflight() {
+  try {
+    const r = await fetch('/api/preflight');
+    const j = await r.json();
+    nlmAvailable = j.nlm_available;
+    const el = document.getElementById('preflight');
+    const yt = j.yt_dlp ? '<span class="ok">\u2713 yt-dlp</span>' : '<span class="fail">\u2717 yt-dlp missing</span>';
+    const ai = j.ai_enabled ? '<span class="ok">\u2713 ' + j.ai_backend + '</span>' : '<span class="warn">\u26A0 AI disabled</span>';
+    const nlm = j.nlm_available ? '<span class="ok">\u2713 notebooklm</span>' : '<span class="warn">\u2022 notebooklm not installed</span>';
+    el.innerHTML = yt + ' \u00B7 ' + ai + ' \u00B7 model: ' + (j.model || 'none') + ' \u00B7 ' + nlm;
+  } catch(e) {
+    document.getElementById('preflight').innerHTML = '<span class="fail">offline</span>';
+  }
+}
+
+async function checkNlmAuth() {
+  try {
+    const r = await fetch('/api/nlm/status');
+    const j = await r.json();
+    nlmAuth = j;
+    const el = document.getElementById('nlm-auth');
+    const txt = document.getElementById('nlm-auth-text');
+    const hint = document.getElementById('nlm-install-hint');
+    if (!j.installed) {
+      el.className = 'nb-auth auth-fail';
+      txt.textContent = 'Not installed';
+      hint.classList.remove('hidden');
+    } else if (j.authenticated) {
+      el.className = 'nb-auth auth-ok';
+      txt.textContent = 'Authenticated';
+      hint.classList.add('hidden');
+    } else {
+      el.className = 'nb-auth auth-fail';
+      txt.textContent = 'Not logged in';
+      hint.classList.remove('hidden');
+      hint.innerHTML = 'Not authenticated. Run: <code>notebooklm login</code> in your terminal.';
+    }
+  } catch(e) {}
+}
+
+async function loadIdeas() {
+  try {
+    const r = await fetch('/api/ideas?dismissed=1');
+    const j = await r.json();
+    ideaCache = j.ideas || [];
+
+    for (const idea of ideaCache) {
+      const p = pendingJobs[idea.id];
+      if (!p) continue;
+      const status = idea[p.field];
+      if (status === 'done') {
+        toast((idea.video_title || 'Idea ' + idea.id) + ': ' + p.label + ' complete');
+        delete pendingJobs[idea.id];
+      } else if (status === 'failed') {
+        toast((idea.video_title || 'Idea ' + idea.id) + ': ' + p.label + ' failed');
+        delete pendingJobs[idea.id];
+      }
+    }
+
+    renderIdeas(ideaCache);
+  } catch(e) {}
+  await loadHubCards();
+}
+
+let hubCards = [];
+let ideaVisible = 30, hubVisible = 30, hubRequest = 0;
+window.addEventListener('DOMContentLoaded', loadScout);
+setInterval(loadScout, 60000);
+
+function factoryActions(item, state, canSend) {
+  state = state || {};
+  const blocked = ['accepted', 'pending', 'uncertain'].includes(state.status);
+  return '<div class="factory-actions" data-factory-item="' + esc(item) + '">' +
+    (state.goal ? '<p>Factory goal (' + esc(state.goal) + '): ' + esc(state.goal_status || 'unknown') + '</p>' : '') +
+    (state.error ? '<p role="status">' + esc(state.error) + '</p>' : '') +
+    (canSend && !state.dismissed ? '<button class="btn-secondary" data-factory-action="send"' + (blocked ? ' disabled' : '') + '>Send to factory</button> ' : '') +
+    '<button class="btn-secondary" data-factory-action="' + (state.dismissed ? 'restore' : 'dismiss') + '">' +
+    (state.dismissed ? 'Restore' : 'Dismiss') + '</button> ' +
+    '<button class="btn-secondary" data-factory-action="' + (state.favourite ? 'unfavourite' : 'favourite') + '" aria-pressed="' + !!state.favourite + '">' + (state.favourite ? 'Unfavourite' : 'Favourite') + '</button> ' +
+    '<button class="btn-secondary" data-copy-markdown>Copy as Markdown</button></div>';
+}
+
+document.addEventListener('click', async function(event) {
+  const button = event.target.closest('[data-factory-action]');
+  if (!button) return;
+  const item = button.closest('[data-factory-item]').dataset.factoryItem;
+  button.disabled = true;
+  try {
+    const response = await fetch('/api/factory/decision', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({item: item, action: button.dataset.factoryAction})
+    });
+    const result = await response.json();
+    toast(result.ok ? (result.goal ? 'Sent to factory (' + result.goal + ')' : 'Decision saved') : result.error || 'Factory request failed');
+  } catch (error) { toast('Request outcome unknown. Refresh before trying again.'); }
+  await loadIdeas();
+});
+
+document.addEventListener('click', function(event) {
+  const button = event.target.closest('[data-copy-markdown]');
+  if (button) exportMarkdown(button.closest('[data-factory-item]').dataset.factoryItem);
+});
+
+async function syncHub() {
+  const button = document.getElementById('hub-sync');
+  button.disabled = true;
+  try {
+    const response = await fetch('/api/hub/sync', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}'});
+    const result = await response.json();
+    document.getElementById('hub-sync-result').textContent = result.ok
+      ? result.queued + ' videos queued; ' + result.cards_added + ' cards added; ' + result.skipped_duplicate + ' duplicates skipped.'
+      : result.error;
+    await loadIdeas();
+  } catch (error) { document.getElementById('hub-sync-result').textContent = 'Collector sync failed. Try again later.'; }
+  finally { button.disabled = false; }
+}
+
+async function loadHubCards() {
+  const request = ++hubRequest;
+  const params = new URLSearchParams({limit: hubVisible, offset: 0,
+    source: document.getElementById('hub-source').value,
+    verdict: document.getElementById('verdict-filter').value,
+    favourites: document.getElementById('only-favourites').checked ? '1' : '0',
+    sent: document.getElementById('only-sent').checked ? '1' : '0',
+    dismissed: document.getElementById('show-dismissed').checked ? '1' : '0'});
+  try {
+    const response = await fetch('/api/hub/cards?' + params);
+    if (!response.ok) throw new Error('Cards unavailable');
+    const result = await response.json();
+    if (request !== hubRequest) return;
+    hubCards = result.cards || [];
+    const select = document.getElementById('hub-source'), selected = select.value;
+    const sources = [...new Set([...(result.sources || []), ...ideaCache.map(idea => idea.intake_source || 'ideaforge')]
+      .flatMap(source => source.split(',').map(name => name.trim().toLowerCase())).filter(Boolean))].sort();
+    select.replaceChildren(new Option('All sources', ''), new Option('YouTube history', '__history__'), new Option('Hub cards', '__hub__'), ...sources.map(source => new Option(source, source)));
+    select.value = [...sources, '__history__', '__hub__'].includes(selected) ? selected : '';
+    document.getElementById('hub-more').classList.toggle('hidden', hubCards.length >= result.total);
+    renderIdeas(ideaCache);
+    renderHubCards();
+  } catch (error) {
+    if (request === hubRequest) document.getElementById('hub-cards').textContent = 'Collector cards unavailable.';
+  }
+}
+
+function showMoreIdeas() {
+  ideaVisible += 30;
+  renderIdeas(ideaCache);
+}
+
+function showMoreHubCards() {
+  hubVisible += 30;
+  loadHubCards();
+}
+
+function renderHubCards() {
+  const cards = hubCards.filter(card => matchesCard(card, 'hub'));
+  document.getElementById('hub-cards').innerHTML = cards.length ? cards.map(card => {
+    const link = /^https?:\/\//i.test(card.url)
+      ? '<a href="' + esc(card.url) + '" target="_blank" rel="noopener noreferrer">Open source</a>' : esc(card.url);
+    return '<article class="idea-card-visual"><div class="icv-body"><h3>' + esc(card.title) + '</h3>' +
+      '<p class="card-summary">' + esc(card.summary) + '</p><p class="card-source">' + esc(card.source) + ' · ' + esc(card.kind) + ' · ' + esc(card.seen_at) + '</p>' +
+      '<p>' + link + '</p>' + factoryActions('hub:' + card.id, card.factory, true) + '</div></article>';
+  }).join('') : '<p>No collected ideas match this filter.</p>';
+}
+
+function matchesCard(card, kind) {
+  const source = document.getElementById('hub-source').value;
+  const state = card.factory || {};
+  const verdict = document.getElementById('verdict-filter')?.value || 'all';
+  if (source === '__history__' && (kind !== 'idea' || !card.youtube_history)) return false;
+  if (source === '__hub__' && kind !== 'hub') return false;
+  if (source && !['__history__', '__hub__'].includes(source) && !(card.source || card.intake_source || 'ideaforge').split(',').map(name => name.trim().toLowerCase()).includes(source.toLowerCase())) return false;
+  if (verdict !== 'all' && (verdict === 'pending' ? !!card.eval_verdict : card.eval_verdict !== verdict)) return false;
+  if (document.getElementById('only-favourites')?.checked && !state.favourite) return false;
+  if (document.getElementById('only-sent')?.checked && !state.goal) return false;
+  return document.getElementById('show-dismissed').checked || !state.dismissed;
+}
+
+function renderAllCards() {
+  ideaVisible = 30;
+  hubVisible = 30;
+  renderIdeas(ideaCache);
+  loadHubCards();
+}
+
+async function exportMarkdown(item) {
+  try {
+    const response = await fetch('/api/markdown?' + (item ? 'item=' + encodeURIComponent(item) : 'favourites=1'));
+    if (!response.ok) throw new Error('Export unavailable');
+    const result = await response.json();
+    if (item) {
+      await navigator.clipboard.writeText(result.markdown);
+      toast('Markdown copied');
+    } else {
+      const url = URL.createObjectURL(new Blob([result.markdown], {type: 'text/markdown;charset=utf-8'}));
+      const link = document.createElement('a');
+      link.href = url; link.download = 'ideaforge-favourites.md'; link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+  } catch (error) { toast('Markdown export failed. Try again.'); }
+}
+
+
+
+async function loadScout() {
+  const panel = document.getElementById('scout-runs');
+  try {
+    const response = await fetch('/api/scout');
+    if (!response.ok) throw new Error('Scout unavailable');
+    const result = await response.json();
+    const latest = result.runs[0];
+    document.getElementById('scout-summary').textContent = latest
+      ? 'Product Scout · Run (' + latest.id + ') · ' + latest.decision + ' · ' + (latest.product || 'No product chosen')
+      : 'Product Scout · No runs recorded';
+    panel.innerHTML = result.runs.length ? result.runs.map(run =>
+      '<article class="scout-card"><h3>' + (run.product ? 'Chosen product (' + esc(run.product) + ')' : 'No product chosen') + '</h3>' +
+      '<p>Scout run (' + esc(run.id) + ')</p><dl><dt>Stage</dt><dd>' + esc(run.stage || 'Not recorded') +
+      '</dd><dt>Decision</dt><dd>' + esc(run.decision) + '</dd><dt>Reason</dt><dd>' + esc(Array.isArray(run.reason) ? run.reason.join('; ') || 'No reason recorded' : run.reason) +
+      '</dd><dt>Product state</dt><dd>' + esc(run.product_state || 'Not recorded') + '</dd></dl></article>'
+    ).join('') : '<p>No Scout runs recorded.</p>';
+  } catch (error) { panel.textContent = 'Scout history unavailable.'; }
+}
+
+function ideaDetailFields(idea) {
+  const fields = idea.details || {};
+  const text = value => {
+    if (Array.isArray(value)) return value.map(text).filter(Boolean).join(', ');
+    if (value && typeof value === 'object') return Object.values(value).map(text).filter(Boolean).join(', ');
+    const result = String(value ?? '').trim();
+    return /^[.\s…]*$/.test(result) ? '' : result;
+  };
+  const core = text(fields.core || idea.eval_one_sentence);
+  const details = [['Problem solved', fields.problem], ['Architecture', fields.architecture],
+    ['Stack', fields.stack], ['NotebookLM summary', idea.nlm_summary]].map(([label, value]) => [label, text(value)])
+    .filter(([label, value]) => value).map(([label, value]) => '<dt>' + label + '</dt><dd>' + esc(value) + '</dd>').join('');
+  return (core ? '<p class="card-summary"><strong>Core idea</strong> ' + esc(core) + '</p>' : '') +
+    '<dl class="idea-details"><dt>Evaluation</dt><dd>' + esc(idea.eval_verdict || 'Not evaluated') + ' · Fit: ' + esc(idea.eval_fit_score ?? 'Not available') +
+    ' · Complexity: ' + esc(idea.eval_complexity ?? 'Not available') + '</dd><dt>Model</dt><dd>' + esc(idea.eval_model || 'Unknown') + '</dd></dl>' +
+    (details ? '<details class="card-details"><summary>Idea details</summary><dl class="idea-details">' + details + '</dl></details>' : '');
+}
+
+async function loadEvaluationModels() {
+  const panel = document.getElementById('evaluation-models');
+  try {
+    const response = await fetch('/api/evaluation-models');
+    if (!response.ok) throw new Error('Model history unavailable');
+    const result = await response.json();
+    panel.innerHTML = '<h3>Models · Last ' + result.evaluations + ' completed evaluations (up to 50)</h3>' +
+      '<p>Unknown values were not recorded. A single distinct fit score can reveal collapsed scoring.</p>' +
+      '<table class="model-table"><thead><tr><th>Model</th><th>Verdicts</th><th>Fit-score spread</th></tr></thead><tbody>' +
+      result.models.map(row => '<tr><td>' + esc(row.model) + '</td><td>' + Object.entries(row.verdicts).map(([name, count]) => esc(name) + ': ' + count).join(', ') +
+        '</td><td>' + (row.fit_count ? esc(row.fit_min) + '–' + esc(row.fit_max) + ' · ' + row.fit_distinct + ' distinct / ' + row.fit_count + ' scored' : 'Unknown') + '</td></tr>').join('') + '</tbody></table>';
+  } catch (error) { panel.textContent = 'Model history unavailable.'; }
+}
+
+async function loadNotebooks() {
+  try {
+    const r = await fetch('/api/notebooks');
+    const j = await r.json();
+    renderNotebooks(j.notebooks || []);
+  } catch(e) {}
+}
+
+/* ---- Handlers ---- */
+async function handleSubmit() {
+  const inp = document.getElementById('input');
+  const val = inp.value.trim();
+  if (!val) { toast('Enter a URL or search query'); return; }
+
+  if (isDirectSource(val)) {
+    inp.value = '';
+    const resp = await fetch('/api/run-all', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({url: val})});
+    const j = await resp.json();
+    if (j.ok) {
+      toast('Idea ' + j.id + ': pipeline started' + (j.source_kind && j.source_kind !== 'youtube' ? ' (' + j.source_kind + ')' : ''));
+      pendingJobs[j.id] = {field:'instr_status', label:'pipeline'};
+    } else {
+      toast('Error: ' + j.error);
+    }
+    await loadIdeas();
+  } else {
+    const btn = document.getElementById('btn-main');
+    btn.disabled = true;
+    btn.textContent = 'Searching\u2026';
+    try {
+      const resp = await fetch('/api/search', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({query: val, max_results: 8})});
+      const j = await resp.json();
+      if (j.ok) {
+        renderSearchResults(j.results, j.query);
+        inp.value = '';
+      } else {
+        toast('Search error: ' + j.error);
+      }
+    } catch(e) {
+      toast('Search failed');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = '&#128269; Search YouTube';
+    }
+  }
+}
+
+async function handleExtractOnly() {
+  const inp = document.getElementById('input');
+  const val = inp.value.trim();
+  if (!val || !isDirectSource(val)) { toast('Paste a URL or file path first'); return; }
+  inp.value = '';
+  const resp = await fetch('/api/ingest', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({url: val})});
+  const j = await resp.json();
+  if (j.ok) toast('Idea ' + j.id + ': extracting transcript\u2026');
+  else toast('Error: ' + j.error);
+  await loadIdeas();
+}
+
+async function ingestSelected(runAll) {
+  const urls = Array.from(selectedSearch);
+  if (!urls.length) { toast('Select some results first'); return; }
+  const resp = await fetch('/api/bulk-ingest', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({urls: urls, run_all: runAll})});
+  const j = await resp.json();
+  if (j.ok) {
+    toast(j.count + ' videos queued' + (runAll ? ' (full pipeline)' : ''));
+    if (runAll) {
+      for (const id of j.ids) pendingJobs[id] = {field:'instr_status', label:'pipeline'};
+    }
+  }
+  closeSearch();
+  await loadIdeas();
+}
+
+async function queueEval(id) {
+  await fetch('/api/evaluate/' + id, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({})});
+  pendingJobs[id] = {field:'eval_status', label:'evaluation'};
+  toast('Evaluation queued');
+  await loadIdeas();
+}
+async function queueInstr(id) {
+  await fetch('/api/instruct/' + id, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({})});
+  pendingJobs[id] = {field:'instr_status', label:'build spec'};
+  toast('Build spec queued');
+  await loadIdeas();
+}
+async function queueRunAll(id) {
+  await fetch('/api/run-all/' + id, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({})});
+  pendingJobs[id] = {field:'instr_status', label:'pipeline'};
+  toast('Pipeline re-queued');
+  await loadIdeas();
+}
+async function del(id) {
+  await fetch('/api/ideas/' + id, {method:'DELETE'});
+  selectedIdeas.delete(id);
+  updateSelectionBar();
+  await loadIdeas();
+  if (currentIdeaId === id) hideModal();
+}
+
+/* ---- Notebook Handlers ---- */
+async function createNotebookFromSelected() {
+  const ids = Array.from(selectedIdeas);
+  if (!ids.length) { toast('Select ideas first'); return; }
+  const name = prompt('Notebook name:', 'Research ' + new Date().toISOString().slice(0,10));
+  if (!name) return;
+  const resp = await fetch('/api/notebook', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name: name, idea_ids: ids})});
+  const j = await resp.json();
+  if (j.ok) toast('Notebook creating\u2026 (' + ids.length + ' ideas)');
+  else toast('Error: ' + j.error);
+  clearSelection();
+  await loadNotebooks();
+}
+async function generateArtifact(nbId, type) {
+  const resp = await fetch('/api/notebook/' + nbId + '/generate', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({type: type})});
+  const j = await resp.json();
+  if (j.ok) toast('Generating ' + type + '…');
+  else toast('Error: ' + j.error);
+  await loadNotebooks();
+}
+async function generateNlm(nlmId, type) {
+  const resp = await fetch('/api/nlm/generate', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({nlm_id: nlmId, type: type})});
+  const j = await resp.json();
+  if (j.ok) toast('Generating ' + type + '…');
+  else toast('Error: ' + j.error);
+  await loadNotebooks();
+}
+async function deleteNotebook(nbId) {
+  await fetch('/api/notebook/' + nbId, {method:'DELETE'});
+  await loadNotebooks();
+}
+async function pushToNlm(ideaId) {
+  var idea = ideaCache.find(function(i) { return i.id === ideaId; });
+  var name = prompt('Notebook name:', idea ? (idea.video_title || 'IdeaForge Research') : 'IdeaForge Research');
+  if (!name) return;
+  toast('Pushing to NotebookLM…');
+  const resp = await fetch('/api/nlm/push', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({idea_id: ideaId, notebook_name: name})});
+  const j = await resp.json();
+  if (j.ok) {
+    toast('\u2713 Pushed to NotebookLM!');
+    await loadNotebooks();
+  } else {
+    toast('Error: ' + j.error);
+  }
+}
+async function nlmChat(nlmId) {
+  var input = document.getElementById('chat-' + nlmId);
+  if (!input) return;
+  var question = input.value.trim();
+  if (!question) return;
+  input.value = '';
+  var answerEl = document.getElementById('chat-answer-' + nlmId);
+  if (answerEl) answerEl.textContent = 'Thinking…';
+  else {
+    var chatDiv = input.closest('.nb-chat');
+    if (chatDiv) {
+      var a = document.createElement('div');
+      a.className = 'nb-chat-answer';
+      a.id = 'chat-answer-' + nlmId;
+      a.textContent = 'Thinking…';
+      chatDiv.appendChild(a);
+    }
+  }
+  const resp = await fetch('/api/nlm/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({nlm_id: nlmId, question: question})});
+  const j = await resp.json();
+  answerEl = document.getElementById('chat-answer-' + nlmId);
+  if (answerEl) {
+    answerEl.textContent = j.ok ? j.answer : ('Error: ' + j.error);
+  }
+}
+async function nlmShareToggle(nlmId) {
+  const resp = await fetch('/api/nlm/share', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({nlm_id: nlmId, enable: true})});
+  const j = await resp.json();
+  toast(j.ok ? 'Share status: ' + j.output.slice(0,100) : 'Error: ' + j.error);
+}
+
+/* ---- Rendering ---- */
+function renderIdeas(ideas) {
+  const listEl = document.getElementById('ideas-list');
+  const emptyEl = document.getElementById('empty-state');
+  const toolbar = document.getElementById('ideas-toolbar');
+  const countEl = document.getElementById('ideas-count');
+
+  document.getElementById('ideas-more').classList.add('hidden');
+  if (!ideas.length) {
+    listEl.innerHTML = '';
+    toolbar.classList.add('hidden');
+    emptyEl.innerHTML =
+      '<h3 style="text-align:center;font-family:var(--font-display);color:var(--text-muted);font-size:1rem;margin-bottom:24px;">Discover what IdeaForge can do</h3>' +
+      '<div class="empty-showcase">' +
+      '<div class="showcase-card">' +
+        '<span class="sc-icon">\uD83D\uDD0D</span>' +
+        '<div class="sc-label">YouTube Search & Extract</div>' +
+        '<div class="sc-detail">Search any topic or paste a URL. Transcripts extracted in seconds via yt-dlp.</div>' +
+        '<div class="sc-demo"><span class="sc-demo-typing" id="sc-typing-1"></span></div>' +
+      '</div>' +
+      '<div class="showcase-card">' +
+        '<span class="sc-icon">\uD83C\uDFAF</span>' +
+        '<div class="sc-label">AI Evaluation</div>' +
+        '<div class="sc-detail">Every idea scored against your developer profile. BUILD, SKIP, or PARK.</div>' +
+        '<div class="sc-demo"><div class="sc-demo-verdict">' +
+          '<span style="background:var(--build-dim);color:var(--build);">BUILD</span>' +
+          '<span style="background:var(--park-dim);color:var(--park);">PARK</span>' +
+          '<span style="background:var(--skip-dim);color:var(--skip);">SKIP</span>' +
+        '</div></div>' +
+      '</div>' +
+      '<div class="showcase-card">' +
+        '<span class="sc-icon">\uD83D\uDCD3</span>' +
+        '<div class="sc-label">NotebookLM Integration</div>' +
+        '<div class="sc-detail">Push ideas to NLM, ask questions via RAG chat, share notebooks.</div>' +
+        '<div class="sc-demo" style="color:var(--text-dim);">\uD83D\uDCAC "What are the key takeaways?"</div>' +
+      '</div>' +
+      '<div class="showcase-card">' +
+        '<span class="sc-icon">\uD83C\uDF99\uFE0F</span>' +
+        '<div class="sc-label">5 Output Types</div>' +
+        '<div class="sc-detail">Generate podcasts, videos, quizzes, mind maps, and slide decks.</div>' +
+        '<div class="sc-demo" style="color:var(--text-muted);display:flex;gap:8px;font-size:1.1rem;">' +
+          '\uD83C\uDF99\uFE0F \uD83C\uDFAC \u2753 \uD83E\uDDE0 \uD83D\uDCCA' +
+        '</div>' +
+      '</div>' +
+      '<div class="empty-showcase-cta">' +
+        '<p>Paste a URL above and hit <strong>Run Pipeline</strong> to start</p>' +
+        '<p style="margin-top:8px;font-size:0.75rem;">Press <kbd style="font-family:var(--font-display);padding:1px 5px;border:1px solid var(--border);border-radius:3px;font-size:0.65rem;">?</kbd> to see all capabilities</p>' +
+      '</div>' +
+      '</div>';
+    scAnimateTyping();
+    return;
+  }
+
+  var filtered = ideas.filter(idea => matchesCard(idea, 'idea'));
+
+  toolbar.classList.remove('hidden');
+  countEl.textContent = Math.min(ideaVisible, filtered.length) + ' shown / ' + filtered.length + ' matching';
+  document.getElementById('ideas-more').classList.toggle('hidden', ideaVisible >= filtered.length);
+  emptyEl.innerHTML = '';
+
+  if (!filtered.length) {
+    listEl.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:40px 20px;">No ideas match this filter.</p>';
+    postRenderHooks.forEach(function(fn) { fn(ideas); });
+    return;
+  }
+
+  listEl.innerHTML = filtered.slice(0, ideaVisible).map(function(i, idx) {
+    var sel = selectedIdeas.has(i.id);
+    var thumb = thumbnailUrl(i.youtube_url);
+    var kindIcon = {pdf:'\uD83D\uDCC4', rss:'\uD83D\uDCE1', text:'\uD83D\uDCDD'}[i.source_kind] || '\uD83C\uDFAC';
+    var v = i.eval_verdict;
+    var vCls = v === 'BUILD' ? 'build' : v === 'SKIP' ? 'skip' : v === 'PARK' ? 'park' : '';
+    var statusDot = function(s) {
+      return s === 'done' ? 'var(--build)' : s === 'failed' ? 'var(--skip)' : (s === 'running' || s === 'extracting' || s === 'queued') ? 'var(--park)' : 'var(--text-dim)';
+    };
+
+    return '<div class="idea-card-visual" style="animation-delay:' + (idx*0.03) + 's">' +
+      '<div class="icv-thumb">' +
+        (thumb
+          ? '<img src="' + thumb + '" alt="" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'"/>' +
+            '<div class="icv-thumb-fallback" style="display:none;">' + kindIcon + '</div>'
+          : '<div class="icv-thumb-fallback">' + kindIcon + '</div>') +
+        (v ? '<span class="icv-verdict-badge ' + vCls + '">' + v + '</span>' : '') +
+        (i.eval_fit_score != null ? '<span class="icv-score">' + i.eval_fit_score + '</span>' : '') +
+        '<div class="icv-status-dots">' +
+          '<span style="background:' + statusDot(i.extract_status) + '" title="Extract: ' + i.extract_status + '"></span>' +
+          '<span style="background:' + statusDot(i.eval_status) + '" title="Evaluate: ' + i.eval_status + '"></span>' +
+          '<span style="background:' + statusDot(i.instr_status) + '" title="Instruct: ' + i.instr_status + '"></span>' +
+        '</div>' +
+        '<input type="checkbox" ' + (sel?'checked':'') + ' onchange="toggleIdeaSelect(' + i.id + ')" style="position:absolute;top:8px;left:8px;accent-color:var(--accent);cursor:pointer;z-index:2;"/>' +
+      '</div>' +
+      '<div class="icv-body">' +
+        '<div class="icv-title">' + esc(i.video_title || 'Untitled') + '</div>' +
+        ideaDetailFields(i) +
+        factoryActions('idea:' + i.id, i.factory, i.eval_status === 'done' && !!i.eval_verdict) +
+        '<div class="icv-footer">' +
+          (i.eval_status==='done' ? '<button class="btn-view" onclick="event.stopPropagation();openDetails(' + i.id + ',\'evaluation\')" title="Evaluation">Evaluation</button>' : '') +
+          (i.instr_status==='done' ? '<button class="btn-view" onclick="event.stopPropagation();openDetails(' + i.id + ',\'instruction\')" title="Build Spec">Build instructions</button>' : '') +
+          (i.extract_status==='done' ? '<button class="btn-view" onclick="event.stopPropagation();openDetails(' + i.id + ',\'transcript\')" title="Transcript">Transcript</button>' : '') +
+          '<button class="btn-run" onclick="event.stopPropagation();queueRunAll(' + i.id + ')" title="Re-run pipeline" style="margin-left:auto;">Re-run</button>' +
+          '<button class="ic-delete" onclick="event.stopPropagation();del(' + i.id + ')" title="Delete" style="font-size:0.7rem;padding:2px 6px;">\u2715</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+  postRenderHooks.forEach(function(fn) { fn(ideas); });
+}
+
+function renderStepper(i) {
+  var steps = [
+    { num: 1, label: 'EXTRACT', desc: 'Pull transcript via yt-dlp', status: i.extract_status, time: i.extract_duration_ms },
+    { num: 2, label: 'EVALUATE', desc: 'Score idea against your profile', status: i.eval_status, time: i.eval_duration_ms },
+    { num: 3, label: 'INSTRUCT', desc: 'Write the build spec', status: i.instr_status, time: i.instr_duration_ms }
+  ];
+  var statusMap = { done:'done', failed:'failed', extracting:'running', running:'running', pending:'waiting', disabled:'waiting', queued:'running' };
+  var statusText = { done:'', failed:'Failed', extracting:'Extracting\u2026', running:'Running\u2026', pending:'Waiting', disabled:'Disabled', queued:'Queued' };
+
+  return '<div class="stepper">' + steps.map(function(s, idx) {
+    var cls = statusMap[s.status] || 'waiting';
+    var txt = statusText[s.status] || '';
+    var time = s.time ? (s.time/1000).toFixed(1) + 's' : '';
+    return (idx > 0 ? '<span class="step-arrow">\u2192</span>' : '') +
+      '<div class="step ' + cls + '">' +
+        '<span class="step-num">' + s.num + '</span>' +
+        '<span class="step-label">' + s.label + '</span>' +
+        '<span class="step-desc">' + s.desc + '</span>' +
+        '<span class="step-time">' + (txt || time) + '</span>' +
+      '</div>';
+  }).join('') + '</div>';
+}
+
+function renderVerdict(i) {
+  if (!i.eval_verdict) return '';
+  var v = i.eval_verdict;
+  var icon = v === 'BUILD' ? '\uD83D\uDFE2' : v === 'SKIP' ? '\uD83D\uDD34' : '\uD83D\uDFE1';
+  var meaning = v === 'BUILD' ? 'Worth building \u2014 spec ready' : v === 'SKIP' ? 'Not a fit' : 'Interesting but not now';
+
+  // Outcome tag or prompt
+  var outcomeHtml = '';
+  if (i.outcome) {
+    var oIcon = {shipped:'\u2713',in_progress:'\u25B6',abandoned:'\u2717',pivoted:'\u21BB'}[i.outcome]||'';
+    outcomeHtml = '<span class="outcome-tag outcome-tag-' + i.outcome + '">' + oIcon + ' ' + i.outcome.replace('_',' ') + '</span>';
+  } else if (v === 'BUILD' && !i.outcome && i.created_at) {
+    var ageMs = Date.now() - new Date(i.created_at).getTime();
+    var ageDays = ageMs / (1000*60*60*24);
+    if (ageDays >= 14) {
+      outcomeHtml = '<div class="outcome-prompt">' +
+        '<span class="outcome-prompt-text">Did you build it?</span>' +
+        '<div class="outcome-btns">' +
+          '<button class="btn-outcome btn-outcome-shipped" onclick="event.stopPropagation();setOutcome(' + i.id + ',\'shipped\')">Shipped</button>' +
+          '<button class="btn-outcome btn-outcome-building" onclick="event.stopPropagation();setOutcome(' + i.id + ',\'in_progress\')">Building</button>' +
+          '<button class="btn-outcome btn-outcome-abandoned" onclick="event.stopPropagation();setOutcome(' + i.id + ',\'abandoned\')">Abandoned</button>' +
+        '</div>' +
+      '</div>';
+    }
+  }
+  if (i.factory_result) {
+    outcomeHtml += '<span class="outcome-tag" title="' + esc(i.factory_evidence || '') + '">Factory: ' +
+      esc(i.factory_result.replace('_', ' ')) + ' (' + esc(i.factory_evidence || '') + ')</span>';
+  }
+
+  return '<div class="verdict-section vs-' + v + '">' +
+    '<span class="verdict verdict-' + v + '">' + icon + ' ' + v + '</span>' +
+    outcomeHtml +
+    '<span style="margin-left:12px;font-size:0.8rem;color:var(--text-muted)">' + meaning + '</span>' +
+    (i.eval_one_sentence ? '<div class="verdict-summary">\u201C' + esc(i.eval_one_sentence) + '\u201D</div>' : '') +
+    '<div class="verdict-scores">' +
+      (i.eval_fit_score != null ? '<span>Fit: ' + i.eval_fit_score + '/100</span>' : '') +
+      (i.eval_complexity != null ? '<span>Complexity: ' + (COMPLEXITY[i.eval_complexity] || i.eval_complexity) + '</span>' : '') +
+    '</div>' +
+  '</div>';
+}
+
+function renderSearchResults(results, query) {
+  selectedSearch.clear();
+  var section = document.getElementById('search-section');
+  var heading = document.getElementById('search-heading');
+  var grid = document.getElementById('search-results');
+
+  heading.textContent = 'Search: \u201C' + query + '\u201D (' + results.length + ' results)';
+  section.classList.remove('hidden');
+
+  if (!results.length) {
+    grid.innerHTML = '<p style="color:var(--text-muted);padding:20px;">No results found.</p>';
+    return;
+  }
+
+  grid.innerHTML = results.map(function(r) {
+    var thumb = thumbnailUrl(r.url);
+    return '<div class="search-card-visual" data-url="' + esc(r.url) + '" onclick="toggleSearchCard(this,\'' + esc(r.url).replace(/'/g,"\\'") + '\')">' +
+      '<div class="scv-thumb">' +
+        (thumb ? '<img src="' + thumb + '" alt="" loading="lazy"/>' : '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:2rem;color:var(--text-dim);">\uD83C\uDFAC</div>') +
+        (r.duration ? '<span class="scv-duration">' + r.duration + '</span>' : '') +
+        '<div class="scv-check"></div>' +
+      '</div>' +
+      '<div class="scv-body">' +
+        '<div class="scv-title">' + esc(r.title) + '</div>' +
+        '<div class="scv-meta">' +
+          '<span>' + esc(r.channel) + '</span>' +
+          '<span>' + formatViews(r.view_count) + ' views</span>' +
+          (r.upload_date ? '<span>' + r.upload_date.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3') + '</span>' : '') +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function renderNotebooks(notebooks) {
+  var list = document.getElementById('notebooks-list');
+  if (!notebooks.length) {
+    list.innerHTML = '<div class="nb-empty">' +
+      '<div class="nb-empty-icon">📓</div>' +
+      'No notebooks yet. Select ideas and click "Create NLM Notebook" or use "Push to NLM" on any idea card.' +
+    '</div>';
+    return;
+  }
+
+  list.innerHTML = notebooks.map(function(nb) {
+    var statusCls = 'nb-status-' + (nb.status || 'pending');
+    var hasNlmId = nb.nlm_id && nb.nlm_id.length > 5;
+    var chatHtml = '';
+    if (hasNlmId) {
+      var lastAnswer = chatAnswers[nb.nlm_id] || '';
+      chatHtml = '<div class="nb-chat">' +
+        '<div class="nb-chat-input">' +
+          '<input id="chat-' + esc(nb.nlm_id) + '" type="text" placeholder="Ask your sources a question…" onkeydown="if(event.key===\'Enter\')nlmChat(\'' + esc(nb.nlm_id) + '\')" />' +
+          '<button class="btn-secondary" onclick="nlmChat(\'' + esc(nb.nlm_id) + '\')">Ask</button>' +
+        '</div>' +
+        (lastAnswer ? '<div class="nb-chat-answer" id="chat-answer-' + esc(nb.nlm_id) + '">' + esc(lastAnswer) + '</div>' : '') +
+      '</div>';
+    }
+
+    var genBtns = '';
+    if (hasNlmId && nb.status === 'ready') {
+      genBtns = '<div class="nb-gen-btns">' +
+        GEN_TYPES.map(function(g) {
+          var st = nb[g.id + '_status'] || '';
+          var cls = st === 'generating' ? ' generating' : '';
+          var label = st === 'generating' ? g.icon + ' …' : st === 'ready' ? g.icon + ' ✓' : g.icon + ' ' + g.label;
+          return '<button class="btn-gen' + cls + '" onclick="generateNlm(\'' + esc(nb.nlm_id) + '\',\'' + g.id + '\')">' + label + '</button>';
+        }).join('') +
+      '</div>';
+    } else if (nb.status === 'ready' && !hasNlmId) {
+      genBtns = '<div class="nb-gen-btns">' +
+        '<button class="btn-gen" onclick="generateArtifact(' + nb.id + ',\'audio\')">🎙️ Podcast</button>' +
+        '<button class="btn-gen" onclick="generateArtifact(' + nb.id + ',\'video\')">🎬 Video</button>' +
+      '</div>';
+    }
+
+    return '<div class="nb-card">' +
+      '<div class="nb-header">' +
+        '<div>' +
+          '<span class="nb-title">' + esc(nb.name) + '</span>' +
+          ' <span class="nb-status ' + statusCls + '">' + (nb.status || 'pending') + '</span>' +
+        '</div>' +
+        '<div style="display:flex;gap:6px;align-items:center;">' +
+          (hasNlmId ? '<button class="btn-secondary" onclick="nlmShareToggle(\'' + esc(nb.nlm_id) + '\')" style="font-size:0.7rem;padding:4px 10px;">🔗 Share</button>' : '') +
+          '<button class="ic-delete" onclick="deleteNotebook(' + nb.id + ')" title="Delete">\u2715</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="nb-meta">' +
+        '<span class="nb-meta-item">📄 ' + (nb.idea_count || nb.source_count || 0) + ' sources</span>' +
+        (hasNlmId ? '<span class="nb-meta-item" style="font-family:var(--font-display);font-size:0.65rem;">ID: ' + nb.nlm_id.slice(0,12) + '…</span>' : '') +
+        (nb.artifact_type ? '<span class="nb-meta-item">' + nb.artifact_type + ': ' + (nb.artifact_status || 'none') + '</span>' : '') +
+        (nb.error ? '<span class="nb-meta-item" style="color:var(--skip)">' + esc(nb.error) + '</span>' : '') +
+      '</div>' +
+      '<div class="nb-actions">' +
+        genBtns +
+      '</div>' +
+      chatHtml +
+    '</div>';
+  }).join('');
+}
+
+/* ---- Modal ---- */
+async function openDetails(id, tab) {
+  currentIdeaId = id;
+  var idea = ideaCache.find(function(i) { return i.id === id; });
+  document.getElementById('modal-title').textContent = idea ? (idea.video_title || 'Idea ' + id) : 'Idea ' + id;
+  document.getElementById('modal').classList.add('open');
+  switchTab(tab || 'transcript');
+  await loadAllSections();
+}
+
+function hideModal() {
+  document.getElementById('modal').classList.remove('open');
+  currentIdeaId = null;
+}
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.toggle('active', t.dataset.tab === name); });
+  document.querySelectorAll('.tab-pane').forEach(function(p) { p.classList.toggle('active', p.id === 'pane-' + name); });
+}
+
+async function loadAllSections() {
+  ['events','transcript','evaluation','instruction'].forEach(function(s) {
+    document.getElementById('pre-' + s).textContent = 'Loading\u2026';
+  });
+
+  var results = await Promise.all([
+    fetch('/api/events/' + currentIdeaId),
+    fetch('/api/content/' + currentIdeaId + '/transcript'),
+    fetch('/api/content/' + currentIdeaId + '/evaluation'),
+    ideaCache.find(idea => idea.id === currentIdeaId)?.instr_status === 'done'
+      ? fetch('/api/content/' + currentIdeaId + '/instruction') : Promise.resolve({ok: false})
+  ]);
+
+  if (results[0].ok) {
+    var ej = await results[0].json();
+    document.getElementById('pre-events').textContent =
+      (ej.events||[]).map(function(e) { return e.ts + ' ' + e.kind + ' ' + (e.detail||''); }).join('\n') || '(no events)';
+  } else document.getElementById('pre-events').textContent = '(no events)';
+
+  document.getElementById('pre-transcript').textContent = results[1].ok ? await results[1].text() : '(not yet extracted)';
+  document.getElementById('pre-evaluation').textContent = results[2].ok ? await results[2].text() : '(not yet evaluated)';
+  document.getElementById('pre-instruction').textContent = results[3].ok ? await results[3].text() : '(not yet generated)';
+}
+
+async function copySection(name) {
+  var txt = document.getElementById('pre-' + name).textContent;
+  await navigator.clipboard.writeText(txt);
+  toast(name + ' copied to clipboard');
+}
+
+async function copyForClaudeCode() {
+  var idea = ideaCache.find(function(i) { return i.id === currentIdeaId; });
+  var spec = document.getElementById('pre-instruction').textContent;
+  var header = '# IdeaForge Build Spec\n# Source: ' + (idea ? idea.youtube_url : 'unknown') + '\n# Generated: ' + new Date().toISOString().slice(0,10) + '\n\n';
+  await navigator.clipboard.writeText(header + spec);
+  toast('Build spec copied for Claude Code');
+}
+
+/* ---- Selection ---- */
+function toggleSearchCard(el, url) {
+  if (selectedSearch.has(url)) {
+    selectedSearch.delete(url);
+    el.classList.remove('selected');
+    el.querySelector('.scv-check').textContent = '';
+  } else {
+    selectedSearch.add(url);
+    el.classList.add('selected');
+    el.querySelector('.scv-check').textContent = '\u2713';
+  }
+}
+
+function toggleIdeaSelect(id) {
+  if (selectedIdeas.has(id)) selectedIdeas.delete(id);
+  else selectedIdeas.add(id);
+  updateSelectionBar();
+}
+
+function updateSelectionBar() {
+  var bar = document.getElementById('selection-bar');
+  var count = document.getElementById('sb-count');
+  if (selectedIdeas.size > 0) {
+    bar.classList.remove('hidden');
+    count.textContent = selectedIdeas.size + ' selected';
+  } else {
+    bar.classList.add('hidden');
+  }
+}
+
+function clearSelection() {
+  selectedIdeas.clear();
+  updateSelectionBar();
+  loadIdeas();
+}
+
+function closeSearch() {
+  document.getElementById('search-section').classList.add('hidden');
+  selectedSearch.clear();
+}
+
+/* ---- Helpers ---- */
+function isDirectSource(s) {
+  // YouTube URL, file path, RSS feed URL, or URL with known extensions
+  if (isYouTubeUrl(s)) return true;
+  if (s.endsWith('.pdf') || s.endsWith('.txt') || s.endsWith('.md')) return true;
+  if (s.startsWith('/') || s.startsWith('~')) return true;  // file path
+  try { var u = new URL(s); return u.protocol === 'http:' || u.protocol === 'https:'; } catch(e) {}
+  return false;
+}
+function sourceBadge(i) {
+  var sk = i.source_kind || 'youtube';
+  var icons = {youtube:'\u25B6',pdf:'\uD83D\uDCC4',rss:'\uD83D\uDCE1',text:'\uD83D\uDCDD'};
+  if (sk === 'youtube') return '';
+  return '<span style="display:inline-flex;align-items:center;gap:3px;padding:1px 6px;border-radius:8px;font-size:0.6rem;font-weight:700;background:var(--accent-dim);color:var(--accent);margin-right:6px;">' + (icons[sk]||'') + ' ' + sk.toUpperCase() + '</span>';
+}
+function isYouTubeUrl(s) {
+  try {
+    var u = new URL(s);
+    return u.hostname.includes('youtube.com') || u.hostname.includes('youtu.be');
+  } catch(e) { return false; }
+}
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, function(m) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; }); }
+function fmtTok(a,b) { if(a==null&&b==null) return '-'; return (a!=null?a:'?')+'/'+(b!=null?b:'?'); }
+function formatViews(n) {
+  if (n == null) return '?';
+  if (n >= 1e6) return (n/1e6).toFixed(1) + 'M';
+  if (n >= 1e3) return (n/1e3).toFixed(1) + 'K';
+  return n.toString();
+}
+/* ---- Outcome Tracking ---- */
+async function setOutcome(id, outcome) {
+  const resp = await fetch('/api/outcome/' + id, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({outcome: outcome})});
+  const j = await resp.json();
+  if (j.ok) toast('Outcome: ' + outcome);
+  else toast('Error: ' + j.error);
+  await loadIdeas();
+}
+
+/* ==== RADAR ==== */
+var subscriptionCache = [];
+
+async function loadSubscriptions() {
+  try {
+    var r = await fetch('/api/subscriptions');
+    var j = await r.json();
+    subscriptionCache = j.subscriptions || [];
+    renderSubscriptions(subscriptionCache);
+  } catch(e) {}
+}
+
+function renderSubscriptions(subs) {
+  var list = document.getElementById('sub-list');
+  if (!list) return;
+  if (!subs.length) {
+    list.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-dim);">No subscriptions yet. Add one above to start scanning automatically.</div>';
+    return;
+  }
+  var kindIcons = {youtube_channel:'\u25B6',youtube_search:'\uD83D\uDD0D',rss_feed:'\uD83D\uDCE1',research_brief:'\uD83E\uDDE0'};
+  var kindLabels = {youtube_channel:'Channel',youtube_search:'Search',rss_feed:'RSS',research_brief:'Research'};
+  list.innerHTML = subs.map(function(s) {
+    var icon = kindIcons[s.kind] || '';
+    var onCls = s.enabled ? 'on' : '';
+    return '<div class="sub-card">' +
+      '<div class="sub-header">' +
+        '<div>' +
+          '<span class="sub-name">' + icon + ' ' + esc(s.name) + '</span>' +
+          '<span class="sub-kind-badge">' + (kindLabels[s.kind]||s.kind) + '</span>' +
+        '</div>' +
+        '<div style="display:flex;gap:6px;align-items:center;">' +
+          '<button class="btn-run" onclick="runSubscription(' + s.id + ')">Run Now</button>' +
+          '<button class="ic-delete" onclick="deleteSubscription(' + s.id + ')" title="Delete">\u2715</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="sub-meta">' +
+        '<span>Target: ' + esc(s.target).slice(0,60) + '</span>' +
+        '<span>Every ' + s.frequency_hours + 'h</span>' +
+        '<span>Max ' + s.max_items + ' items</span>' +
+        (s.last_run_at ? '<span>Last: ' + s.last_run_at.slice(0,16) + '</span>' : '<span>Never run</span>') +
+        (s.latest_new_ideas != null ? '<span>Found ' + s.latest_new_ideas + ' last run</span>' : '') +
+        '<span>' + s.run_count + ' runs total</span>' +
+      '</div>' +
+      '<div class="sub-actions">' +
+        '<button class="sub-toggle ' + onCls + '" onclick="toggleSubscription(' + s.id + ')" title="' + (s.enabled?'Enabled':'Disabled') + '"></button>' +
+        '<span style="font-size:0.7rem;color:var(--text-dim);margin-left:4px;">' + (s.enabled?'Enabled':'Disabled') + '</span>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+async function createSubscription() {
+  var name = document.getElementById('sub-name').value.trim();
+  var kind = document.getElementById('sub-kind').value;
+  var target = document.getElementById('sub-target').value.trim();
+  var freq = parseInt(document.getElementById('sub-freq').value);
+  if (!name || !target) { toast('Name and target required'); return; }
+  var resp = await fetch('/api/subscription', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({name:name, kind:kind, target:target, frequency_hours:freq})});
+  var j = await resp.json();
+  if (j.ok) {
+    toast('Subscription created');
+    document.getElementById('sub-name').value = '';
+    document.getElementById('sub-target').value = '';
+    await loadSubscriptions();
+  } else toast('Error: ' + j.error);
+}
+
+async function runSubscription(id) {
+  await fetch('/api/subscription/' + id + '/run', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({})});
+  toast('Scan queued');
+  setTimeout(loadSubscriptions, 3000);
+}
+
+async function toggleSubscription(id) {
+  await fetch('/api/subscription/' + id, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'toggle'})});
+  await loadSubscriptions();
+}
+
+async function deleteSubscription(id) {
+  await fetch('/api/subscription/' + id, {method:'DELETE'});
+  await loadSubscriptions();
+}
+
+/* ==== OUTCOMES ==== */
+async function loadOutcomes() {
+  try {
+    const r = await fetch('/api/ideas?dismissed=1');
+    const j = await r.json();
+    const ideas = j.ideas || [];
+
+    const pending = ideas.filter(i => i.outcome_eligible && !i.outcome);
+    const counts = j.outcome_counts || {};
+    renderOutcomeProgress(counts.owner_outcomes || 0, counts.factory_outcomes || 0,
+      counts.total_eligible || 0, counts.combined_outcomes || 0, counts.build_waiting || 0);
+    renderOutcomesList(pending);
+  } catch(e) {
+    console.error('Failed to load outcomes:', e);
+  }
+}
+
+function renderOutcomeProgress(ownerCount, factoryCount, total, combinedCount, buildWaiting) {
+  const progress = document.getElementById('outcome-progress');
+  if (!progress) return;
+
+  const pct = total > 0 ? Math.round((combinedCount / total) * 100) : 0;
+  const calibrationReady = combinedCount >= 10;
+
+  const needMore = Math.max(0, 10 - combinedCount);
+  const statusText = calibrationReady
+    ? '✓ Calibration active'
+    : `Need ${needMore} more for calibration`;
+
+  progress.innerHTML = `
+    <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px;">
+      <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div>
+          <span style="font-size: 1.1rem; font-weight: 600; color: var(--text);">${ownerCount} of ${total} owner outcomes</span>
+          <span style="font-size: 1.1rem; font-weight: 600; color: var(--text); margin-left: 12px;">${factoryCount} of ${total} factory outcomes</span>
+          <span style="margin-left: 12px; color: var(--text-muted);">BUILD ideas waiting: ${buildWaiting}</span>
+          <span style="margin-left: 12px; padding: 4px 12px; border-radius: 12px; font-size: 0.75rem;
+                background: var(--accent-dim); color: var(--accent);">${statusText}</span>
+        </div>
+        <span style="font-size: 0.9rem; color: var(--text-muted);">${pct}% complete</span>
+      </div>
+      <div style="height: 8px; background: var(--bg-input); border-radius: 4px; overflow: hidden;">
+        <div style="height: 100%; background: var(--accent); width: ${pct}%;"></div>
+      </div>
+    </div>
+  `;
+}
+
+function renderOutcomesList(ideas) {
+  const list = document.getElementById('outcomes-list');
+  if (!list) return;
+
+  if (!ideas.length) {
+    list.innerHTML = `
+      <div style="text-align:center; padding: 60px 20px; color: var(--text-dim);">
+        <div style="font-size: 3rem; margin-bottom: 16px;">✓</div>
+        <div style="font-size: 1.1rem; margin-bottom: 8px;">All caught up!</div>
+        <div style="font-size: 0.9rem;">All followed ideas have owner outcomes logged.</div>
+      </div>
+    `;
+    return;
+  }
+
+  list.innerHTML = ideas.map(idea => {
+    const title = esc(idea.video_title || 'Untitled');
+    const titleShort = title.length > 80 ? title.slice(0, 80) + '...' : title;
+    const verdict = idea.eval_verdict || 'UNKNOWN';
+    const fit = idea.eval_fit_score || 0;
+    const summary = esc(idea.eval_one_sentence || '');
+    const summaryShort = summary.length > 120 ? summary.slice(0, 120) + '...' : summary;
+    const verdictColor = verdict === 'BUILD' ? 'var(--build)' : verdict === 'PARK' ? 'var(--park)' : 'var(--skip)';
+
+    return `
+      <div class="outcome-card" id="outcome-${idea.id}" style="background: var(--bg-card); border: 1px solid var(--border);
+           border-radius: var(--radius); padding: 20px; margin-bottom: 16px;">
+        <div style="display: flex; gap: 16px; align-items: start;">
+          <div style="flex: 1;">
+            <div style="font-weight: 600; font-size: 0.95rem; margin-bottom: 8px; color: var(--text);">${titleShort}</div>
+            <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 12px;">${summaryShort}</div>
+            <div style="display: flex; gap: 12px; align-items: center; margin-bottom: 12px;">
+              <span style="padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 600; font-family: var(--font-display);
+                   background: ${verdictColor}22; color: ${verdictColor};">${verdict}</span>
+              <span style="font-size: 0.8rem; color: var(--text-dim);">Fit: ${fit}</span>
+              ${idea.factory_result ? `<span class="outcome-tag">Factory: ${esc(idea.factory_result.replace('_', ' '))} (${esc(idea.factory_evidence || '')})</span>` : ''}
+            </div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <button class="btn-outcome" data-id="${idea.id}" data-outcome="shipped"
+                      style="padding: 8px 16px; background: var(--build)22; color: var(--build); border: 1px solid var(--build);
+                      border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 600; cursor: pointer;">
+                ✓ Shipped
+              </button>
+              <button class="btn-outcome" data-id="${idea.id}" data-outcome="in_progress"
+                      style="padding: 8px 16px; background: var(--accent-dim); color: var(--accent); border: 1px solid var(--accent);
+                      border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 600; cursor: pointer;">
+                → In Progress
+              </button>
+              <button class="btn-outcome" data-id="${idea.id}" data-outcome="abandoned"
+                      style="padding: 8px 16px; background: var(--skip)22; color: var(--skip); border: 1px solid var(--skip);
+                      border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 600; cursor: pointer;">
+                ✗ Abandoned
+              </button>
+              <button class="btn-outcome" data-id="${idea.id}" data-outcome="pivoted"
+                      style="padding: 8px 16px; background: var(--park)22; color: var(--park); border: 1px solid var(--park);
+                      border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 600; cursor: pointer;">
+                ↻ Parked
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Add click handlers
+  document.querySelectorAll('.btn-outcome').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const id = parseInt(e.target.dataset.id);
+      const outcome = e.target.dataset.outcome;
+      await logOutcome(id, outcome);
+    });
+  });
+}
+
+async function logOutcome(ideaId, outcome) {
+  try {
+    const r = await fetch(`/api/outcome/${ideaId}`, {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({outcome})
+    });
+
+    if (r.ok) {
+      // Mark card as done and fade out
+      const card = document.getElementById(`outcome-${ideaId}`);
+      if (card) {
+        card.style.opacity = '0.5';
+        card.style.pointerEvents = 'none';
+        const done = document.createElement('div');
+        done.style = 'position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); ' +
+                     'background: var(--build); color: var(--bg); padding: 8px 16px; border-radius: 4px; ' +
+                     'font-weight: 600; font-size: 0.9rem;';
+        done.textContent = '✓ Logged';
+        card.style.position = 'relative';
+        card.appendChild(done);
+
+        setTimeout(() => {
+          card.style.transition = 'all 0.3s';
+          card.style.maxHeight = '0';
+          card.style.opacity = '0';
+          card.style.marginBottom = '0';
+          card.style.padding = '0';
+          setTimeout(() => loadOutcomes(), 300);
+        }, 800);
+      }
+
+      showToast(`Outcome logged: ${outcome}`);
+    } else {
+      showToast('Failed to log outcome', true);
+    }
+  } catch(e) {
+    console.error('Failed to log outcome:', e);
+    showToast('Failed to log outcome', true);
+  }
+}
+
+/* ==== RESEARCH ==== */
+var activeResearchRun = null;
+var researchPollTimer = null;
+
+async function runResearch(mode) {
+  mode = mode || 'youtube';
+  var brief = document.getElementById('research-brief').value.trim();
+  if (!brief) { toast('Enter a research brief first'); return; }
+  var modeLabels = {youtube:'Search YouTube', web:'Search Web', hybrid:'Hybrid'};
+  var btns = ['research-run-btn','research-web-btn','research-hybrid-btn'];
+  btns.forEach(function(id) { var b = document.getElementById(id); if(b) { b.disabled = true; }});
+  var activeBtn = mode === 'web' ? document.getElementById('research-web-btn') : mode === 'hybrid' ? document.getElementById('research-hybrid-btn') : document.getElementById('research-run-btn');
+  if (activeBtn) activeBtn.textContent = 'Running...';
+  document.getElementById('research-active').classList.remove('hidden');
+  var statusBar = document.getElementById('research-status-bar');
+  var statusText = document.getElementById('research-status-text');
+  statusBar.classList.remove('hidden');
+  statusText.textContent = 'Submitting (' + mode + ')...';
+  document.getElementById('research-results-grid').innerHTML = '';
+  document.getElementById('research-actions-bar').classList.add('hidden');
+  document.getElementById('research-funnel-bar').classList.add('hidden');
+  try {
+    var r = await fetch('/api/research/run', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({prompt:brief, mode:mode})});
+    var j = await r.json();
+    if (!j.ok) {
+      toast('Error: ' + j.error);
+      btns.forEach(function(id) { var b = document.getElementById(id); if(b) { b.disabled = false; }});
+      if (activeBtn) activeBtn.textContent = modeLabels[mode] || 'Search';
+      statusBar.classList.add('hidden'); return;
+    }
+    activeResearchRun = j.run_id;
+    window._researchMode = mode;
+    statusText.textContent = 'Queued — waiting for planner...';
+    pollResearchRun(j.run_id);
+  } catch(e) {
+    toast('Network error');
+    btns.forEach(function(id) { var b = document.getElementById(id); if(b) { b.disabled = false; }});
+    if (activeBtn) activeBtn.textContent = modeLabels[mode] || 'Search';
+    statusBar.classList.add('hidden');
+  }
+}
+
+function pollResearchRun(runId) {
+  if (researchPollTimer) clearInterval(researchPollTimer);
+  var mode = window._researchMode || 'youtube';
+  var searchLabel = {youtube:'Searching YouTube...', web:'Searching the web...', hybrid:'Searching YouTube + web...'}[mode] || 'Searching...';
+  researchPollTimer = setInterval(async function() {
+    try {
+      var r = await fetch('/api/research/' + runId);
+      var j = await r.json();
+      if (!j.ok) return;
+      var run = j.run;
+      var statusText = document.getElementById('research-status-text');
+      if (run.status === 'planning') statusText.textContent = 'Planning search queries (' + mode + ')...';
+      else if (run.status === 'searching') statusText.textContent = searchLabel;
+      else if (run.status === 'ranking') statusText.textContent = 'Ranking candidates with brain context...';
+      else if (run.status === 'done') {
+        clearInterval(researchPollTimer); researchPollTimer = null;
+        statusText.textContent = 'Done — ' + run.total_candidates + ' candidates, ' + run.total_above_threshold + ' above threshold';
+        _resetResearchButtons();
+        renderResearchRun(j);
+      } else if (run.status === 'failed' || run.status === 'error') {
+        clearInterval(researchPollTimer); researchPollTimer = null;
+        statusText.textContent = 'Error: ' + (run.error || 'unknown');
+        _resetResearchButtons();
+      }
+    } catch(e) {}
+  }, 2000);
+}
+function _resetResearchButtons() {
+  var btns = [{id:'research-run-btn',label:'Search YouTube'},{id:'research-web-btn',label:'Search Web'},{id:'research-hybrid-btn',label:'Hybrid'}];
+  btns.forEach(function(b) { var el = document.getElementById(b.id); if(el) { el.disabled = false; el.textContent = b.label; }});
+}
+
+function renderResearchRun(data) {
+  var run = data.run;
+  var results = data.results || [];
+  // Funnel bar
+  var fb = document.getElementById('research-funnel-bar');
+  fb.classList.remove('hidden');
+  fb.innerHTML = 'Candidates: <span>' + run.total_candidates + '</span> &rarr; Above threshold: <span>' + run.total_above_threshold + '</span> &rarr; Ingested: <span>' + run.total_ingested + '</span>';
+  // Results grid
+  var grid = document.getElementById('research-results-grid');
+  if (results.length === 0) {
+    grid.innerHTML = '<p style="color:var(--text-dim);padding:20px;">No results found.</p>';
+    document.getElementById('research-actions-bar').classList.add('hidden');
+    return;
+  }
+  grid.innerHTML = results.map(function(res) {
+    var isWeb = res.source_type === 'web';
+    var thumb = isWeb ? null : thumbnailUrl(res.url, 'mq');
+    var scoreCls = res.score >= 70 ? 'high' : res.score >= 40 ? 'mid' : 'low';
+    var sel = res.selected ? ' selected' : '';
+    var ingested = res.idea_id ? ' style="opacity:0.5;pointer-events:none;"' : '';
+    var srcBadge = '<div class="rr-source-badge ' + (isWeb ? 'rr-src-web' : 'rr-src-yt') + '">' + (isWeb ? '&#127760;' : '&#9654;') + '</div>';
+    var thumbHtml = isWeb ?
+      '<div style="padding:30px;text-align:center;font-size:2rem;background:var(--bg-body);">&#127760;</div>' :
+      (thumb ? '<img src="' + thumb + '" loading="lazy" onerror="this.parentNode.innerHTML=\'<div style=padding:30px;text-align:center;font-size:2rem>&#127909;</div>\'">' : '<div style="padding:30px;text-align:center;font-size:2rem">&#127909;</div>');
+    return '<div class="rr-card' + sel + '" data-rid="' + res.id + '" onclick="toggleResearchCard(this)"' + ingested + '>' +
+      '<div class="rr-thumb">' +
+        thumbHtml +
+        '<div class="rr-score-badge ' + scoreCls + '">' + (res.score != null ? Math.round(res.score) : '?') + '</div>' +
+        srcBadge +
+        '<div class="rr-check">' + (res.idea_id ? '&#10003; ingested' : '') + '</div>' +
+      '</div>' +
+      '<div class="rr-body">' +
+        '<div class="rr-title">' + esc(res.title || 'Untitled') + '</div>' +
+        (res.reason ? '<div class="rr-reason">' + esc(res.reason) + '</div>' : '') +
+        '<div class="rr-meta">' +
+          (res.channel_or_domain ? '<span>' + esc(res.channel_or_domain) + '</span>' : '') +
+          (res.duration_seconds ? '<span>' + formatDuration(res.duration_seconds) + '</span>' : '') +
+          (res.view_count ? '<span>' + formatViews(res.view_count) + ' views</span>' : '') +
+        '</div>' +
+        (res.brain_note ? '<div class="rr-brain-note">' + esc(res.brain_note) + '</div>' : '') +
+        (res.signals_found ? '<div class="rr-signals">' + esc(res.signals_found).split(',').map(function(s){ return '<span class="rr-signal">' + s.trim() + '</span>'; }).join('') + '</div>' : '') +
+      '</div>' +
+    '</div>';
+  }).join('');
+  document.getElementById('research-actions-bar').classList.remove('hidden');
+}
+
+function formatDuration(s) {
+  if (!s) return '';
+  var m = Math.floor(s / 60); var sec = s % 60;
+  return m + ':' + (sec < 10 ? '0' : '') + sec;
+}
+
+function formatViews(n) {
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+  return String(n);
+}
+
+function toggleResearchCard(el) {
+  if (el.style.pointerEvents === 'none') return;
+  el.classList.toggle('selected');
+}
+
+function selectAllResearch() {
+  document.querySelectorAll('.rr-card').forEach(function(el) {
+    if (el.style.pointerEvents !== 'none') {
+      var score = parseFloat(el.querySelector('.rr-score-badge').textContent);
+      if (score >= 60) el.classList.add('selected');
+    }
+  });
+}
+
+function clearResearchSelection() {
+  document.querySelectorAll('.rr-card.selected').forEach(function(el) {
+    el.classList.remove('selected');
+  });
+}
+
+async function ingestResearchSelected() {
+  if (!activeResearchRun) { toast('No active research run'); return; }
+  var ids = [];
+  document.querySelectorAll('.rr-card.selected').forEach(function(el) {
+    ids.push(parseInt(el.dataset.rid));
+  });
+  if (ids.length === 0) { toast('Select results to ingest first'); return; }
+  try {
+    var r = await fetch('/api/research/ingest', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({run_id: activeResearchRun, result_ids: ids})});
+    var j = await r.json();
+    if (j.ok) {
+      toast('Ingested ' + j.count + ' ideas — pipeline started');
+      // Reload the run to update UI
+      var rr = await fetch('/api/research/' + activeResearchRun);
+      var rd = await rr.json();
+      if (rd.ok) renderResearchRun(rd);
+    } else toast('Error: ' + j.error);
+  } catch(e) { toast('Network error during ingest'); }
+}
+
+async function loadResearchHistory() {
+  try {
+    var r = await fetch('/api/research/history');
+    var j = await r.json();
+    if (!j.ok) return;
+    var list = document.getElementById('research-history-list');
+    if (!j.runs || j.runs.length === 0) {
+      list.innerHTML = '<p style="color:var(--text-dim);font-size:0.85rem;">No research runs yet. Enter a brief and hit Run Research.</p>';
+      return;
+    }
+    list.innerHTML = j.runs.map(function(run) {
+      var statusCls = run.status === 'done' ? 'color:var(--build)' : run.status === 'error' ? 'color:var(--skip)' : 'color:var(--text-dim)';
+      return '<div class="research-history-item" onclick="loadResearchRun(' + run.id + ')">' +
+        '<div style="flex:1;min-width:0;">' +
+          '<div style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(run.prompt.slice(0, 80)) + '</div>' +
+          '<div style="font-size:0.75rem;color:var(--text-dim);margin-top:2px;">' + run.created_at.slice(0,16) + ' &middot; ' + run.total_candidates + ' found &middot; ' + run.total_above_threshold + ' above threshold &middot; ' + run.total_ingested + ' ingested</div>' +
+        '</div>' +
+        '<span style="' + statusCls + ';font-size:0.8rem;font-weight:600;">' + run.status.toUpperCase() + '</span>' +
+      '</div>';
+    }).join('');
+  } catch(e) {}
+}
+
+async function loadResearchRun(runId) {
+  try {
+    var r = await fetch('/api/research/' + runId);
+    var j = await r.json();
+    if (!j.ok) { toast('Failed to load run'); return; }
+    activeResearchRun = runId;
+    document.getElementById('research-brief').value = j.run.prompt || '';
+    document.getElementById('research-active').classList.remove('hidden');
+    var statusBar = document.getElementById('research-status-bar');
+    var statusText = document.getElementById('research-status-text');
+    statusBar.classList.remove('hidden');
+    statusText.textContent = j.run.status === 'done'
+      ? 'Done — ' + j.run.total_candidates + ' candidates, ' + j.run.total_above_threshold + ' above threshold'
+      : j.run.status.charAt(0).toUpperCase() + j.run.status.slice(1);
+    renderResearchRun(j);
+  } catch(e) { toast('Failed to load research run'); }
+}
+
+var currentBriefId = null;
+
+async function loadSavedBriefs() {
+  try {
+    var r = await fetch('/api/research/briefs');
+    var j = await r.json();
+    if (!j.ok || !j.briefs || j.briefs.length === 0) {
+      document.getElementById('saved-briefs-section').classList.add('hidden');
+      return;
+    }
+    document.getElementById('saved-briefs-section').classList.remove('hidden');
+    document.getElementById('saved-briefs-bar').innerHTML = j.briefs.map(function(b) {
+      return '<div class="brief-chip" onclick="loadBrief(' + b.id + ')" title="' + esc(b.prompt.slice(0, 120)) + '">' +
+        esc(b.name) +
+        '<span class="bc-runs">' + b.total_runs + ' runs</span>' +
+        (b.radar_sub_id ? '<span class="bc-radar">RADAR</span>' : '') +
+      '</div>';
+    }).join('');
+  } catch(e) {}
+}
+
+async function loadBrief(briefId) {
+  try {
+    var r = await fetch('/api/research/brief/' + briefId);
+    var j = await r.json();
+    if (!j.ok) return;
+    currentBriefId = briefId;
+    document.getElementById('research-brief').value = j.brief.prompt;
+    // Load the most recent run for this brief if available
+    if (j.runs && j.runs.length > 0) {
+      loadResearchRun(j.runs[0].id);
+    }
+  } catch(e) {}
+}
+
+async function saveResearchBrief() {
+  if (!activeResearchRun) { toast('Run a research first'); return; }
+  var name = prompt('Brief name (short label):');
+  if (!name || !name.trim()) return;
+  try {
+    var r = await fetch('/api/research/save-brief', {method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({run_id: activeResearchRun, name: name.trim()})});
+    var j = await r.json();
+    if (j.ok) {
+      currentBriefId = j.brief_id;
+      toast('Brief saved: ' + name.trim());
+      loadSavedBriefs();
+    } else toast('Error: ' + j.error);
+  } catch(e) { toast('Save failed'); }
+}
+
+async function saveResearchAsRadar() {
+  if (!currentBriefId) { toast('Save as brief first'); return; }
+  try {
+    var r = await fetch('/api/research/brief/' + currentBriefId + '/radar', {method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({frequency_hours: 24})});
+    var j = await r.json();
+    if (j.ok) {
+      toast('Brief added to Radar (daily scan)');
+      loadSavedBriefs();
+    } else toast('Error: ' + j.error);
+  } catch(e) { toast('Radar save failed'); }
+}
+
+/* ==== INSIGHTS ==== */
+async function loadPatterns() {
+  var sec = document.getElementById('patterns-section');
+  try {
+    var r = await fetch('/api/patterns');
+    var j = await r.json();
+    if (!j.ok || !j.ready) {
+      var need = (j.minimum||10) - (j.total_evaluated||0);
+      sec.innerHTML = '<div class="pattern-section"><p class="pattern-muted">Need ' + need + ' more evaluated ideas to surface patterns.<br>Currently: ' + (j.total_evaluated||0) + '/10 minimum.</p></div>';
+      return;
+    }
+    var v = j.verdicts || {};
+    var total = (v.BUILD||0)+(v.SKIP||0)+(v.PARK||0);
+    var pctB = total? Math.round((v.BUILD||0)/total*100):0;
+    var pctS = total? Math.round((v.SKIP||0)/total*100):0;
+    var pctP = 100-pctB-pctS;
+
+    var avgFit = j.avg_fit_by_verdict || {};
+    var bsr = j.build_ship_rate;
+    var threshold = j.effective_threshold;
+    var cr = j.complexity_rates || {};
+
+    // Calibration progress
+    var totalOutcomes = j.total_outcomes || 0;
+    var ownerOutcomes = j.owner_n || 0;
+    var factoryOutcomes = j.factory_n || 0;
+    var nextMilestone = totalOutcomes >= 30 ? 'maxed' : (totalOutcomes >= 20 ? 30 : (totalOutcomes >= 10 ? 20 : 10));
+    var calibrationActive = totalOutcomes >= 10;
+
+    // Metrics
+    var html = '<div class="pattern-section"><h3>Calibration Dashboard</h3>';
+    html += '<p class="pattern-muted">Sources: ' + ownerOutcomes + ' owner, ' + factoryOutcomes + ' factory</p>';
+
+    // Progress bar for outcomes
+    if (!calibrationActive) {
+      var needMore = 10 - totalOutcomes;
+      html += '<div style="background:var(--accent-dim); border:1px solid var(--accent); border-radius:var(--radius); padding:16px; margin-bottom:20px;">';
+      html += '<div style="font-size:0.9rem; font-weight:600; margin-bottom:8px;">⚠ Calibration needs ' + needMore + ' more outcomes</div>';
+      html += '<div style="font-size:0.8rem; color:var(--text-muted);">Log outcomes in the <strong>Outcomes</strong> tab to activate pattern learning</div>';
+      html += '</div>';
+    } else {
+      html += '<div style="background:var(--build-dim); border:1px solid var(--build); border-radius:var(--radius); padding:16px; margin-bottom:20px;">';
+      html += '<div style="font-size:0.9rem; font-weight:600; color:var(--build); margin-bottom:8px;">✓ Calibration Active (' + totalOutcomes + ' outcomes logged)</div>';
+      html += '<div style="font-size:0.8rem; color:var(--text-muted);">Next milestone: ' + (nextMilestone === 'maxed' ? 'All unlocked!' : nextMilestone + ' outcomes for enhanced domain analysis') + '</div>';
+      html += '</div>';
+    }
+
+    html += '<div class="pattern-grid">';
+    html += '<div class="pattern-metric"><div class="pattern-metric-label">Total Evaluated</div><div class="pattern-metric-value">' + total + '</div><div class="pattern-metric-sub">ideas analyzed</div></div>';
+    html += '<div class="pattern-metric"><div class="pattern-metric-label">BUILD Ship Rate</div><div class="pattern-metric-value">' + (bsr!==null&&bsr!==undefined? Math.round(bsr*100)+'%' : 'N/A') + '</div><div class="pattern-metric-sub">' + (bsr!==null&&bsr!==undefined? 'of BUILD ideas shipped' : 'no outcomes yet') + '</div></div>';
+    html += '<div class="pattern-metric"><div class="pattern-metric-label">Effective Threshold</div><div class="pattern-metric-value">' + (threshold!==null&&threshold!==undefined? threshold : 'N/A') + '</div><div class="pattern-metric-sub">' + (threshold!==null&&threshold!==undefined? 'fit score that predicts shipping' : 'need outcomes data') + '</div></div>';
+    html += '<div class="pattern-metric"><div class="pattern-metric-label">Outcomes Logged</div><div class="pattern-metric-value">' + totalOutcomes + '</div><div class="pattern-metric-sub">' + (calibrationActive ? 'calibration active' : 'need ' + (10-totalOutcomes) + ' more') + '</div></div>';
+    html += '</div>';
+
+    // Threshold visualization - show where threshold sits on fit score distribution
+    if (threshold !== null && threshold !== undefined) {
+      html += '<div class="pattern-bar-container" style="margin-top:20px;"><div class="pattern-bar-label">Threshold Visualization</div>';
+      html += '<div style="position:relative; height:60px; background:var(--bg-input); border-radius:var(--radius-sm); padding:10px;">';
+      html += '<div style="position:absolute; left:0; right:0; top:50%; height:2px; background:var(--border);"></div>';
+
+      // Add fit score markers
+      for(var i=0; i<=100; i+=20) {
+        var left = i + '%';
+        var isThreshold = Math.abs(i - threshold) < 3;
+        html += '<div style="position:absolute; left:' + left + '; top:0; bottom:0; border-left:1px solid var(--border);"></div>';
+        html += '<div style="position:absolute; left:' + left + '; bottom:-16px; font-size:0.7rem; color:var(--text-dim); transform:translateX(-50%);">' + i + '</div>';
+      }
+
+      // Threshold marker
+      var thresholdPos = Math.min(95, Math.max(5, threshold)) + '%';
+      html += '<div style="position:absolute; left:' + thresholdPos + '; top:50%; transform:translate(-50%, -50%); width:3px; height:40px; background:var(--accent);"></div>';
+      html += '<div style="position:absolute; left:' + thresholdPos + '; top:-20px; transform:translateX(-50%); background:var(--accent); color:var(--bg); padding:2px 8px; border-radius:3px; font-size:0.7rem; font-weight:600;">Threshold: ' + threshold + '</div>';
+      html += '</div>';
+      html += '<div style="font-size:0.75rem; color:var(--text-muted); margin-top:28px;">Ideas below threshold would be filtered. Threshold learned from your shipping history.</div>';
+      html += '</div>';
+
+      // Before/After comparison
+      if (bsr !== null && bsr !== undefined) {
+        var buildCount = v.BUILD || 0;
+        var belowThreshold = Math.round(buildCount * (1 - bsr) * 0.6); // Estimate based on ship rate
+        var withoutCalibration = buildCount;
+        var withCalibration = Math.max(0, buildCount - belowThreshold);
+
+        html += '<div class="pattern-bar-container" style="margin-top:20px;"><div class="pattern-bar-label">Calibration Impact</div>';
+        html += '<div style="background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-sm); padding:20px;">';
+        html += '<div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; text-align:center;">';
+
+        html += '<div>';
+        html += '<div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:8px;">Without Calibration</div>';
+        html += '<div style="font-size:2rem; font-weight:700; color:var(--text);">' + withoutCalibration + '</div>';
+        html += '<div style="font-size:0.75rem; color:var(--text-dim);">BUILD recommendations</div>';
+        html += '</div>';
+
+        html += '<div>';
+        html += '<div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:8px;">With Calibration</div>';
+        html += '<div style="font-size:2rem; font-weight:700; color:var(--build);">' + withCalibration + '</div>';
+        html += '<div style="font-size:0.75rem; color:var(--text-dim);">Higher-quality BUILDs</div>';
+        html += '</div>';
+
+        html += '</div>';
+
+        if (belowThreshold > 0) {
+          html += '<div style="margin-top:16px; padding-top:16px; border-top:1px solid var(--border); font-size:0.85rem; color:var(--accent);">';
+          html += '→ Filtered <strong>' + belowThreshold + ' low-fit ideas</strong> that you likely would have abandoned';
+          html += '</div>';
+        }
+
+        html += '</div></div>';
+      }
+    }
+
+    // Verdict distribution bar
+    html += '<div class="pattern-bar-container"><div class="pattern-bar-label">Verdict Distribution</div>';
+    html += '<div class="pattern-bar">';
+    if(pctB>0) html += '<div class="pattern-bar-seg pattern-bar-build" style="width:'+pctB+'%">BUILD '+pctB+'%</div>';
+    if(pctS>0) html += '<div class="pattern-bar-seg pattern-bar-skip" style="width:'+pctS+'%">SKIP '+pctS+'%</div>';
+    if(pctP>0) html += '<div class="pattern-bar-seg pattern-bar-park" style="width:'+pctP+'%">PARK '+pctP+'%</div>';
+    html += '</div></div>';
+
+    // Complexity breakdown
+    html += '<div class="pattern-bar-container"><div class="pattern-bar-label">Ship Rate by Complexity</div>';
+    for (var c = 1; c <= 5; c++) {
+      var b = cr[String(c)] || {total:0, shipped:0, rate:null};
+      var w = b.total > 0 ? Math.max(5, Math.round(b.total / total * 100)) : 0;
+      var rateStr = b.rate !== null ? Math.round(b.rate*100)+'% shipped' : (b.total>0?'no outcomes':'none');
+      html += '<div class="complexity-row">';
+      html += '<div class="complexity-label">' + c + '</div>';
+      html += '<div class="complexity-bar-track"><div class="complexity-bar-fill" style="width:' + w + '%"></div></div>';
+      html += '<div class="complexity-stat">' + b.total + ' ideas, ' + rateStr + '</div>';
+      html += '</div>';
+    }
+    html += '</div></div>';
+
+    sec.innerHTML = html;
+  } catch(e) {
+    sec.innerHTML = '<div class="pattern-section"><p class="pattern-muted">Failed to load patterns.</p></div>';
+  }
+}
+async function loadBrain() {
+  var sec = document.getElementById('brain-section');
+  try {
+    var r = await fetch('/api/brain/latest');
+    var j = await r.json();
+    var brain = j.brain;
+
+    var html = '<div class="pattern-section"><h3>Founder Brain Export</h3>';
+    if (brain) {
+      html += '<div class="pattern-grid">';
+      html += '<div class="pattern-metric"><div class="pattern-metric-label">Last Export</div><div class="pattern-metric-value" style="font-size:0.9rem;">' + esc(brain.exported_at||'—') + '</div></div>';
+      html += '<div class="pattern-metric"><div class="pattern-metric-label">Signature</div><div class="pattern-metric-value" style="font-size:0.9rem;color:var(--accent);">' + esc(brain.signature||'—') + '</div></div>';
+      html += '</div>';
+    }
+    html += '<div style="display:flex;gap:10px;margin-top:12px;">';
+    html += '<button class="btn-primary" style="font-size:0.8rem;padding:10px 18px;" onclick="exportBrain()">Export Founder Brain</button>';
+    if (brain) {
+      html += '<button class="btn-secondary" onclick="downloadBrainJSON()">Download JSON</button>';
+      html += '<button class="btn-secondary" onclick="copyBrainMarkdown()">Copy FOUNDER-BRAIN.md</button>';
+    }
+    html += '</div>';
+    if (brain) {
+      html += '<details style="margin-top:16px;"><summary style="cursor:pointer;color:var(--text-muted);font-size:0.85rem;">Preview JSON</summary>';
+      html += '<pre style="margin-top:8px;font-size:0.75rem;max-height:300px;overflow:auto;background:rgba(0,0,0,0.3);padding:12px;border-radius:6px;color:var(--text-dim);">' + esc(JSON.stringify(brain, null, 2)) + '</pre>';
+      html += '</details>';
+    }
+    html += '</div>';
+    sec.innerHTML = html;
+  } catch(e) {
+    sec.innerHTML = '<div class="pattern-section"><h3>Founder Brain Export</h3><button class="btn-primary" style="font-size:0.8rem;padding:10px 18px;" onclick="exportBrain()">Export Founder Brain</button></div>';
+  }
+}
+
+async function exportBrain() {
+  try {
+    var r = await fetch('/api/brain/export', {method:'POST', headers:{'Content-Type':'application/json'}, body:'{}'});
+    var j = await r.json();
+    if (j.ok) {
+      toast('Brain exported successfully!');
+      await loadBrain();
+    } else {
+      toast('Export failed: ' + (j.error||'unknown'));
+    }
+  } catch(e) { toast('Export failed'); }
+}
+
+function downloadBrainJSON() {
+  window.open('/api/brain/latest', '_blank');
+}
+
+async function copyBrainMarkdown() {
+  try {
+    var r = await fetch('/api/brain/latest');
+    var j = await r.json();
+    if (j.brain) {
+      // Reconstruct markdown from brain data
+      var lines = ['# Founder Brain (IdeaForge Export)', ''];
+      lines.push('*Exported: ' + (j.brain.exported_at||'') + '*');
+      lines.push('*Signature: ' + (j.brain.signature||'N/A') + '*');
+      lines.push('');
+      var p = j.brain.profile || {};
+      lines.push('## Developer Profile');
+      lines.push('- ' + (p.developer_profile||''));
+      lines.push('- Budget: ' + (p.budget||''));
+      lines.push('- Domain advantage: ' + (p.domain_advantage||''));
+      lines.push('- Style: ' + (p.style||''));
+      lines.push('');
+      lines.push('## Calibrated Thresholds');
+      var cal = j.brain.calibration || {};
+      lines.push('- Effective build threshold: **' + (j.brain.effective_threshold||'Not yet calibrated') + '**');
+      if (cal.build_ship_rate !== undefined) lines.push('- BUILD ship rate: ' + cal.build_ship_rate);
+      lines.push('');
+      await navigator.clipboard.writeText(lines.join('\n'));
+      toast('Copied FOUNDER-BRAIN.md to clipboard');
+    }
+  } catch(e) { toast('Copy failed'); }
+}
+
+/* ==== INSIGHTS: RESEARCH ANALYTICS ==== */
+async function loadResearchFunnel() {
+  var sec = document.getElementById('research-funnel-section');
+  try {
+    var r = await fetch('/api/brain/funnel');
+    var j = await r.json();
+    if (!j.ok || !j.ready) {
+      sec.innerHTML = j.total_runs === 0
+        ? '<div class="pattern-section"><h3>Research Funnel</h3><p class="pattern-muted">No research runs yet. Use Research Mode to start building funnel data.</p></div>'
+        : '';
+      return;
+    }
+    var max = j.total_candidates || 1;
+    var rate = j.rates || {};
+    var html = '<div class="pattern-section"><h3>Research Funnel</h3>';
+    html += '<p style="font-size:0.78rem;color:var(--text-dim);margin-bottom:12px;">' + j.total_runs + ' research runs</p>';
+    var rows = [
+      {label:'Candidates searched', val:j.total_candidates, pct:'', cls:'fb-candidates', w:100},
+      {label:'Above threshold', val:j.total_above_threshold, pct:rate.above_pct+'%', cls:'fb-above', w:Math.round(j.total_above_threshold/max*100)},
+      {label:'Ingested', val:j.total_ingested, pct:rate.ingest_pct+'%', cls:'fb-ingested', w:Math.round(j.total_ingested/max*100)},
+      {label:'BUILD verdict', val:j.total_build, pct:rate.build_pct+'%', cls:'fb-build', w:Math.round(j.total_build/max*100)},
+      {label:'Shipped', val:j.total_shipped, pct:rate.ship_pct+'%', cls:'fb-shipped', w:Math.round(j.total_shipped/max*100)}
+    ];
+    rows.forEach(function(row) {
+      html += '<div class="funnel-row">';
+      html += '<div class="funnel-label">' + row.label + '</div>';
+      html += '<div class="funnel-bar-wrap"><div class="funnel-bar-fill ' + row.cls + '" style="width:' + Math.max(row.w, 1) + '%"></div></div>';
+      html += '<div class="funnel-value">' + row.val + (row.pct ? ' (' + row.pct + ')' : '') + '</div>';
+      html += '</div>';
+    });
+    if (j.research_to_ship_rate !== null) {
+      html += '<div style="margin-top:10px;font-family:var(--font-display);font-size:0.85rem;color:var(--accent);">Research-to-ship rate: <strong>' + (j.research_to_ship_rate * 100).toFixed(1) + '%</strong></div>';
+    }
+    html += '</div>';
+    sec.innerHTML = html;
+  } catch(e) { sec.innerHTML = ''; }
+}
+
+async function loadTopicPerformance() {
+  var sec = document.getElementById('topic-performance-section');
+  try {
+    var r = await fetch('/api/brain/topics');
+    var j = await r.json();
+    if (!j.ok || !j.ready || !j.topics || j.topics.length === 0) {
+      sec.innerHTML = j.total_briefs === 0
+        ? '<div class="pattern-section"><h3>Topic Performance</h3><p class="pattern-muted">Save research briefs to track topic performance over time.</p></div>'
+        : '';
+      return;
+    }
+    var maxIngested = Math.max.apply(null, j.topics.map(function(t){ return t.total_ingested || 1; }));
+    var html = '<div class="pattern-section"><h3>Topic Performance</h3>';
+    j.topics.forEach(function(t) {
+      var w = Math.round((t.total_ingested || 0) / maxIngested * 100);
+      html += '<div class="topic-row">';
+      html += '<div class="topic-name" title="' + esc(t.prompt) + '">' + esc(t.name) + '</div>';
+      html += '<div class="topic-bar-wrap"><div class="topic-bar-fill" style="width:' + Math.max(w, 1) + '%"></div></div>';
+      html += '<div class="topic-stats">' + t.total_ingested + ' ingested' + (t.ship_rate !== null ? ' &middot; ' + (t.ship_rate * 100).toFixed(0) + '% ship' : '') + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+    sec.innerHTML = html;
+  } catch(e) { sec.innerHTML = ''; }
+}
+
+async function loadComplexityThresholds() {
+  var sec = document.getElementById('complexity-thresholds-section');
+  try {
+    var r = await fetch('/api/brain/thresholds');
+    var j = await r.json();
+    if (!j.ok || !j.ready) {
+      sec.innerHTML = '';
+      return;
+    }
+    var th = j.thresholds || {};
+    var html = '<div class="pattern-section"><h3>Per-Complexity Thresholds</h3>';
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;">';
+    for (var c = 1; c <= 5; c++) {
+      var b = th[String(c)];
+      if (!b) continue;
+      html += '<div class="pattern-metric">';
+      html += '<div class="pattern-metric-label">Complexity ' + c + '</div>';
+      html += '<div class="pattern-metric-value" style="font-size:1.1rem;">' + (b.threshold !== null ? b.threshold : '—') + '</div>';
+      html += '<div class="pattern-metric-sub">' + b.total + ' ideas' + (b.ship_rate !== null ? ' &middot; ' + Math.round(b.ship_rate * 100) + '% ship' : '') + '</div>';
+      html += '</div>';
+    }
+    html += '</div></div>';
+    sec.innerHTML = html;
+  } catch(e) { sec.innerHTML = ''; }
+}
+
+/* ==== PIPELINE ==== */
+var pipe = { step:'source', urls:[], nbName:'', nbId:null, ids:[], poll:null };
+var pipeSearchSel = new Set();
+var WSTEPS = [{k:'source',l:'Source'},{k:'processing',l:'Process'},{k:'results',l:'Results'},{k:'generate',l:'Generate'},{k:'done',l:'Done'}];
+
+function switchView(v) {
+  document.querySelectorAll('.main-tab').forEach(function(t){ t.classList.toggle('active', t.dataset.view===v); });
+  ['ideas','pipeline','radar','research','outcomes','insights'].forEach(function(id) {
+    var el = document.getElementById('view-'+id);
+    if (el) el.classList.toggle('hidden', v!==id);
+  });
+  document.querySelector('.hero').style.display = v==='ideas' ? '' : 'none';
+  if (v==='pipeline') renderWizard();
+  if (v==='radar') loadSubscriptions();
+  if (v==='research') { loadResearchHistory(); loadSavedBriefs(); }
+  if (v==='outcomes') loadOutcomes();
+  if (v==='insights') { loadEvaluationModels(); loadPatterns(); loadResearchFunnel(); loadTopicPerformance(); loadComplexityThresholds(); loadBrain(); }
+}
+
+function renderWizard() {
+  var order = WSTEPS.map(function(s){return s.k;});
+  var ci = order.indexOf(pipe.step);
+  document.getElementById('wizard-bar').innerHTML = WSTEPS.map(function(s,i){
+    var cls = i<ci?'ws-done':i===ci?'ws-active':'';
+    return (i>0?'<span class="ws-arrow">\u2192</span>':'') +
+      '<div class="ws '+cls+'"><span class="ws-num">'+(i+1)+'</span><span class="ws-lbl">'+s.l+'</span></div>';
+  }).join('');
+  document.querySelectorAll('.ps').forEach(function(el){el.classList.add('hidden');});
+  document.getElementById('ps-'+pipe.step).classList.remove('hidden');
+}
+
+function pipeSearch() {
+  var inp = document.getElementById('pipe-input');
+  var val = inp.value.trim();
+  if (!val) return;
+  if (isYouTubeUrl(val)) { pipeAddUrl(val, null, null); inp.value=''; return; }
+  var btn = document.getElementById('pipe-btn-search');
+  btn.disabled=true; btn.textContent='Searching\u2026';
+  fetch('/api/search',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:val,max_results:8})})
+  .then(function(r){return r.json();}).then(function(j){
+    if(j.ok) renderPipeSearch(j.results, val);
+    else toast('Search error: '+j.error);
+  }).catch(function(){toast('Search failed');})
+  .finally(function(){btn.disabled=false;btn.textContent='Search';});
+}
+
+function renderPipeSearch(results, query) {
+  pipeSearchSel.clear();
+  var grid = document.getElementById('pipe-search-grid');
+  grid.classList.remove('hidden');
+  if (!results.length) { grid.innerHTML='<p style="color:var(--text-muted);padding:20px;">No results for "'+esc(query)+'"</p>'; return; }
+  grid.innerHTML = results.map(function(r){
+    var thumb = thumbnailUrl(r.url);
+    return '<div class="search-card-visual" data-url="'+esc(r.url)+'" data-title="'+esc(r.title)+'" data-ch="'+esc(r.channel)+'" onclick="pipeToggleSearch(this)">' +
+      '<div class="scv-thumb">' +
+        (thumb ? '<img src="'+thumb+'" alt="" loading="lazy"/>' : '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:2rem;color:var(--text-dim);">\uD83C\uDFAC</div>') +
+        (r.duration ? '<span class="scv-duration">'+r.duration+'</span>' : '') +
+        '<div class="scv-check"></div>' +
+      '</div>' +
+      '<div class="scv-body">' +
+        '<div class="scv-title">'+esc(r.title)+'</div>' +
+        '<div class="scv-meta">' +
+          '<span>'+esc(r.channel)+'</span>' +
+          '<span>'+formatViews(r.view_count)+' views</span>' +
+          (r.upload_date?'<span>'+r.upload_date.replace(/(\d{4})(\d{2})(\d{2})/,'$1-$2-$3')+'</span>':'') +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('') +
+  '<div style="text-align:right;margin-top:10px;">' +
+    '<button class="btn-primary" style="font-size:0.8rem;padding:8px 16px;" onclick="pipeAddFromSearch()">Add Selected</button>' +
+  '</div>';
+}
+
+function pipeToggleSearch(el) {
+  var url = el.dataset.url;
+  if (pipeSearchSel.has(url)) { pipeSearchSel.delete(url); el.classList.remove('selected'); el.querySelector('.scv-check').textContent=''; }
+  else { pipeSearchSel.add(url); el.classList.add('selected'); el.querySelector('.scv-check').textContent='\u2713'; }
+}
+
+function pipeAddFromSearch() {
+  pipeSearchSel.forEach(function(url){
+    var card = document.querySelector('.search-card-visual[data-url="'+CSS.escape(url)+'"]');
+    var title = card ? card.dataset.title : null;
+    var ch = card ? card.dataset.ch : null;
+    pipeAddUrl(url, title, ch);
+  });
+  pipeSearchSel.clear();
+  document.getElementById('pipe-search-grid').classList.add('hidden');
+}
+
+function pipeAddUrl(url, title, channel) {
+  if (pipe.urls.some(function(u){return u.url===url;})) return;
+  pipe.urls.push({url:url, title:title||url, channel:channel||''});
+  renderPipeChips();
+}
+
+function pipeRemoveUrl(idx) {
+  pipe.urls.splice(idx, 1);
+  renderPipeChips();
+}
+
+function pipeAddBulk() {
+  var ta = document.getElementById('pipe-bulk-ta');
+  ta.value.split('\n').forEach(function(line){
+    var u = line.trim();
+    if (u && isYouTubeUrl(u)) pipeAddUrl(u,null,null);
+  });
+  ta.value='';
+  document.getElementById('pipe-bulk').classList.add('hidden');
+}
+
+function renderPipeChips() {
+  var hdr = document.getElementById('pipe-sel-hdr');
+  var chips = document.getElementById('pipe-sel-chips');
+  var run = document.getElementById('pipe-run-row');
+  if (!pipe.urls.length) { hdr.classList.add('hidden'); run.classList.add('hidden'); chips.innerHTML=''; return; }
+  hdr.classList.remove('hidden'); run.classList.remove('hidden');
+  document.getElementById('pipe-sel-n').textContent = pipe.urls.length;
+  chips.innerHTML = pipe.urls.map(function(u,i){
+    return '<div class="url-chip"><span>'+esc(u.title).slice(0,55)+'</span><button onclick="pipeRemoveUrl('+i+')">\u00D7</button></div>';
+  }).join('');
+}
+
+async function pipeRun() {
+  if (!pipe.urls.length) { toast('Select at least one video'); return; }
+  var nbName = document.getElementById('pipe-nb-name').value.trim() || 'Pipeline '+new Date().toISOString().slice(0,10);
+  var urls = pipe.urls.map(function(u){return u.url;});
+  try {
+    var resp = await fetch('/api/pipeline',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({urls:urls,notebook_name:nbName})});
+    var j = await resp.json();
+    if (!j.ok) { toast('Error: '+j.error); return; }
+    pipe.ids = j.idea_ids;
+    pipe.nbId = j.notebook_id;
+    pipe.nbName = nbName;
+    pipe.step = 'processing';
+    renderWizard();
+    pipe.poll = setInterval(pipePoll, 2000);
+    pipePoll();
+  } catch(e) { toast('Pipeline start failed'); }
+}
+
+async function pipePoll() {
+  if (!pipe.nbId) return;
+  try {
+    var resp = await fetch('/api/pipeline-status/'+pipe.nbId);
+    var j = await resp.json();
+    if (!j.ok) return;
+    renderPipeProgress(j);
+    if (j.progress.all_done) {
+      clearInterval(pipe.poll);
+      setTimeout(function(){
+        pipe.step='results';
+        renderWizard();
+        renderPipeResults(j);
+      }, 1200);
+    }
+  } catch(e){}
+}
+
+function renderPipeProgress(data) {
+  var p = data.progress;
+  var done = p.instructed + p.failed;
+  var pct = p.total>0 ? Math.round(done/p.total*100) : 0;
+  document.getElementById('pipe-prog-lbl').textContent = done+' of '+p.total+' complete'+(p.failed>0?' ('+p.failed+' failed)':'');
+  document.getElementById('pipe-prog-fill').style.width = pct+'%';
+  var sm = {done:'d-done',failed:'d-fail',extracting:'d-run',running:'d-run',pending:'',queued:'d-run',disabled:''};
+  document.getElementById('pipe-vid-list').innerHTML = data.ideas.map(function(i){
+    return '<div class="pv-card">'+
+      '<div class="pv-title">'+esc(i.video_title||i.youtube_url)+'</div>'+
+      '<div class="pv-dots" title="Extract / Evaluate / Instruct">'+
+        '<div class="pv-dot '+(sm[i.extract_status]||'')+'"></div>'+
+        '<div class="pv-dot '+(sm[i.eval_status]||'')+'"></div>'+
+        '<div class="pv-dot '+(sm[i.instr_status]||'')+'"></div>'+
+      '</div>'+
+      (i.eval_verdict?'<span class="verdict verdict-'+i.eval_verdict+'" style="font-size:0.7rem;padding:4px 10px;">'+i.eval_verdict+'</span>':'')+
+      (i.last_error?'<span style="color:var(--skip);font-size:0.7rem;margin-left:8px;">'+esc(i.last_error).slice(0,40)+'</span>':'')+
+    '</div>';
+  }).join('');
+}
+
+function renderPipeResults(data) {
+  var ideas = data.ideas;
+  var builds = ideas.filter(function(i){return i.eval_verdict==='BUILD';}).length;
+  var skips = ideas.filter(function(i){return i.eval_verdict==='SKIP';}).length;
+  var parks = ideas.filter(function(i){return i.eval_verdict==='PARK';}).length;
+
+  document.getElementById('pipe-res-summary').innerHTML =
+    '<div style="display:flex;gap:20px;justify-content:center;margin:16px 0;">'+
+      '<span style="color:var(--build);font-family:var(--font-display);font-weight:700;">'+builds+' BUILD</span>'+
+      '<span style="color:var(--park);font-family:var(--font-display);font-weight:700;">'+parks+' PARK</span>'+
+      '<span style="color:var(--skip);font-family:var(--font-display);font-weight:700;">'+skips+' SKIP</span>'+
+    '</div>'+
+    '<div style="text-align:center;margin-top:12px;">'+
+      '<p style="color:var(--text-muted);font-size:0.85rem;">Notebook: <strong style="color:var(--accent)">'+esc(data.notebook.name)+'</strong></p>'+
+      (nlmAvailable?'<button class="btn-primary" style="margin-top:16px;" onclick="pipeGoGen()">Continue to Generate</button>':
+        '<button class="btn-primary" style="margin-top:16px;" onclick="pipeGoDone()">Finish</button>')+
+    '</div>';
+
+  document.getElementById('pipe-res-grid').innerHTML = ideas.map(function(i){
+    return '<div class="result-card" onclick="openDetails('+i.id+')">'+
+      '<div style="font-weight:600;margin-bottom:8px;">'+esc(i.video_title||'Untitled')+'</div>'+
+      (i.eval_verdict?'<span class="verdict verdict-'+i.eval_verdict+'" style="font-size:0.75rem;padding:4px 12px;">'+i.eval_verdict+'</span>':'<span style="color:var(--text-dim);font-size:0.8rem;">No verdict</span>')+
+      (i.eval_one_sentence?'<div style="margin-top:8px;font-size:0.8rem;color:var(--text-muted);">'+esc(i.eval_one_sentence)+'</div>':'')+
+      (i.eval_fit_score!=null?'<div style="margin-top:6px;font-family:var(--font-display);font-size:0.7rem;color:var(--text-dim);">Fit: '+i.eval_fit_score+'/100</div>':'')+
+    '</div>';
+  }).join('');
+}
+
+async function pipeGoGen() {
+  pipe.step='generate';
+  renderWizard();
+  var resp = await fetch('/api/pipeline-status/'+pipe.nbId);
+  var j = await resp.json();
+  if (j.notebook.status==='waiting'||j.notebook.status==='pending') {
+    document.getElementById('pipe-gen-body').innerHTML =
+      '<div style="text-align:center;padding:20px;">'+
+        '<p style="color:var(--text-muted);margin-bottom:16px;">First, create the NotebookLM notebook from your transcripts.</p>'+
+        '<button class="btn-primary" id="pipe-fin-btn" onclick="pipeFinalize()">Create NotebookLM Notebook</button>'+
+      '</div>';
+  } else if (j.notebook.status==='ready') {
+    renderGenOptions();
+  } else if (j.notebook.status==='creating') {
+    document.getElementById('pipe-gen-body').innerHTML = '<div style="text-align:center;padding:20px;color:var(--park);">Notebook is being created\u2026</div>';
+    pipe.poll = setInterval(async function(){
+      var r2 = await fetch('/api/pipeline-status/'+pipe.nbId);
+      var j2 = await r2.json();
+      if (j2.notebook.status==='ready') { clearInterval(pipe.poll); renderGenOptions(); }
+      else if (j2.notebook.status==='failed') { clearInterval(pipe.poll); document.getElementById('pipe-gen-body').innerHTML='<p style="color:var(--skip);text-align:center;">Failed: '+esc(j2.notebook.error||'unknown')+'</p>'; }
+    }, 3000);
+  } else {
+    document.getElementById('pipe-gen-body').innerHTML = '<p style="color:var(--skip);text-align:center;">Notebook status: '+j.notebook.status+'</p>';
+  }
+}
+
+async function pipeFinalize() {
+  var btn = document.getElementById('pipe-fin-btn');
+  btn.disabled=true; btn.textContent='Creating\u2026';
+  await fetch('/api/notebook/'+pipe.nbId+'/finalize',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({})});
+  pipe.poll = setInterval(async function(){
+    var r = await fetch('/api/pipeline-status/'+pipe.nbId);
+    var j = await r.json();
+    if (j.notebook.status==='ready') { clearInterval(pipe.poll); renderGenOptions(); }
+    else if (j.notebook.status==='failed') { clearInterval(pipe.poll); document.getElementById('pipe-gen-body').innerHTML='<p style="color:var(--skip);text-align:center;">Notebook creation failed: '+esc(j.notebook.error||'unknown')+'</p>'; }
+  }, 3000);
+}
+
+function renderGenOptions() {
+  document.getElementById('pipe-gen-body').innerHTML =
+    '<div style="text-align:center;padding:20px;">'+
+      '<p style="color:var(--build);margin-bottom:20px;">Notebook is ready!</p>'+
+      '<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">'+
+        '<button class="btn-primary" style="padding:16px 32px;" onclick="pipeGenArtifact(\'podcast\')">Generate Podcast</button>'+
+        '<button class="btn-secondary" style="padding:16px 32px;" onclick="pipeGenArtifact(\'report\')">Generate Report</button>'+
+      '</div>'+
+      '<button class="btn-secondary" style="margin-top:16px;" onclick="pipeGoDone()">Skip \u2192 Done</button>'+
+    '</div>';
+}
+
+async function pipeGenArtifact(type) {
+  await generateArtifact(pipe.nbId, type);
+  document.getElementById('pipe-gen-body').innerHTML =
+    '<div style="text-align:center;padding:20px;">'+
+      '<p style="color:var(--park);">Generating '+type+'\u2026 This may take several minutes.</p>'+
+      '<p style="color:var(--text-dim);font-size:0.8rem;margin-top:8px;">Check the Notebooks section in Ideas tab for status.</p>'+
+      '<button class="btn-primary" style="margin-top:20px;" onclick="pipeGoDone()">Continue to Summary</button>'+
+    '</div>';
+}
+
+function pipeGoDone() {
+  pipe.step='done';
+  renderWizard();
+  document.getElementById('pipe-done-body').innerHTML =
+    '<div style="text-align:center;padding:20px;">'+
+      '<p style="font-size:2rem;margin-bottom:16px;color:var(--build);">\u2713</p>'+
+      '<p style="font-size:1rem;">Processed <strong style="color:var(--accent)">'+pipe.ids.length+'</strong> videos</p>'+
+      '<p style="color:var(--text-muted);margin-top:8px;">Notebook: <strong>'+esc(pipe.nbName)+'</strong></p>'+
+      '<p style="color:var(--text-dim);font-size:0.8rem;margin-top:12px;">All results available in the Ideas tab.</p>'+
+    '</div>';
+}
+
+function pipeReset() {
+  clearInterval(pipe.poll);
+  pipe = {step:'source',urls:[],nbName:'',nbId:null,ids:[],poll:null};
+  pipeSearchSel.clear();
+  document.getElementById('pipe-nb-name').value = 'Pipeline '+new Date().toISOString().slice(0,10);
+  document.getElementById('pipe-sel-chips').innerHTML = '';
+  document.getElementById('pipe-search-grid').innerHTML = '';
+  document.getElementById('pipe-search-grid').classList.add('hidden');
+  document.getElementById('pipe-sel-hdr').classList.add('hidden');
+  document.getElementById('pipe-run-row').classList.add('hidden');
+  renderWizard();
+}
+
+function toast(msg) {
+  var el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(function() { el.classList.remove('show'); }, 3000);
+}
+
+/* ==== POST-RENDER HOOKS ==== */
+var postRenderHooks = [];
+function addPostRenderHook(fn) { postRenderHooks.push(fn); }
+
+/* ==== FORGE MAP (Command Palette) ==== */
+var FORGE_FEATURES = [
+  {cluster:'Input',icon:'\uD83D\uDD17',name:'Paste YouTube URL',desc:'Drop any YouTube URL into the input to start the full pipeline'},
+  {cluster:'Input',icon:'\uD83D\uDD0D',name:'YouTube Search',desc:'Type a topic instead of a URL to search YouTube directly'},
+  {cluster:'Input',icon:'\uD83D\uDCCB',name:'Bulk URL Paste',desc:'Paste multiple YouTube URLs at once in the Pipeline tab'},
+  {cluster:'Input',icon:'\u26A1',name:'Extract Only',desc:'Pull just the transcript without running AI evaluation'},
+  {cluster:'Analysis',icon:'\uD83E\uDDE0',name:'3-Step Pipeline',desc:'Extract transcript \u2192 Evaluate with AI \u2192 Generate build spec'},
+  {cluster:'Analysis',icon:'\uD83C\uDFAF',name:'BUILD / SKIP / PARK',desc:'AI scores each idea against your developer profile and context'},
+  {cluster:'Analysis',icon:'\uD83D\uDCDD',name:'Build Spec',desc:'Full implementation plan ready to paste into your code editor'},
+  {cluster:'Analysis',icon:'\uD83D\uDD04',name:'Re-run Steps',desc:'Re-evaluate or re-instruct any individual idea at any time'},
+  {cluster:'Analysis',icon:'\uD83D\uDCCB',name:'Event Log',desc:'See the complete processing timeline for each idea'},
+  {cluster:'Notebooks',icon:'\u2705',name:'Multi-Select',desc:'Check multiple ideas then batch-create a NotebookLM notebook'},
+  {cluster:'Notebooks',icon:'\uD83D\uDCD3',name:'Push to NLM',desc:'Push any single idea directly into NotebookLM'},
+  {cluster:'Notebooks',icon:'\uD83D\uDCAC',name:'RAG Chat',desc:'Ask questions about your sources and get AI-powered answers'},
+  {cluster:'Notebooks',icon:'\uD83D\uDD17',name:'Share Notebooks',desc:'Generate a shareable link for any NotebookLM notebook'},
+  {cluster:'Output',icon:'\uD83C\uDF99\uFE0F',name:'Podcast',desc:'Generate an audio podcast from your research notebook'},
+  {cluster:'Output',icon:'\uD83C\uDFAC',name:'Video',desc:'Create a whiteboard-style video summary'},
+  {cluster:'Output',icon:'\u2753',name:'Quiz',desc:'Auto-generate quiz questions from your sources'},
+  {cluster:'Output',icon:'\uD83E\uDDE0',name:'Mind Map',desc:'Visualize connections between ideas as a mind map'},
+  {cluster:'Output',icon:'\uD83D\uDCCA',name:'Slides',desc:'Generate a slide deck from your research'},
+  {cluster:'Workflow',icon:'\uD83E\uDDEA',name:'Pipeline Wizard',desc:'Guided flow: search \u2192 process \u2192 review \u2192 generate',key:'Pipeline tab'},
+  {cluster:'Workflow',icon:'\uD83D\uDCE4',name:'Copy for Claude Code',desc:'Formatted build spec with header, ready for Claude Code IDE'},
+];
+
+function openForgeMap() {
+  var el = document.getElementById('forge-map');
+  el.classList.add('open');
+  renderForgeMap('');
+  setTimeout(function() { document.getElementById('fm-search').focus(); }, 100);
+}
+function closeForgeMap() {
+  document.getElementById('forge-map').classList.remove('open');
+  document.getElementById('fm-search').value = '';
+}
+function renderForgeMap(filter) {
+  var grid = document.getElementById('fm-grid');
+  var lower = filter.toLowerCase();
+  var clusters = {};
+  FORGE_FEATURES.forEach(function(f) {
+    if (lower && f.name.toLowerCase().indexOf(lower)===-1 && f.desc.toLowerCase().indexOf(lower)===-1 && f.cluster.toLowerCase().indexOf(lower)===-1) return;
+    if (!clusters[f.cluster]) clusters[f.cluster] = [];
+    clusters[f.cluster].push(f);
+  });
+  var html = '';
+  Object.keys(clusters).forEach(function(cluster) {
+    html += '<div class="fm-cluster">' + esc(cluster) + '</div>';
+    clusters[cluster].forEach(function(f) {
+      html += '<div class="fm-node">' +
+        '<span class="fm-node-icon">' + f.icon + '</span>' +
+        '<div class="fm-node-name">' + esc(f.name) + '</div>' +
+        '<div class="fm-node-desc">' + esc(f.desc) + '</div>' +
+        (f.key ? '<span class="fm-node-key">' + esc(f.key) + '</span>' : '') +
+      '</div>';
+    });
+  });
+  if (!html) html = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-dim);">No matching capabilities</div>';
+  grid.innerHTML = html;
+}
+
+/* Forge Map keyboard handler */
+document.addEventListener('keydown', function(e) {
+  var tag = (e.target.tagName || '').toLowerCase();
+  if (e.key === 'Escape' && document.getElementById('forge-map').classList.contains('open')) {
+    closeForgeMap(); e.preventDefault(); return;
+  }
+  if (tag === 'input' || tag === 'textarea') return;
+  if (e.key === '?' || (e.key === '/' && !e.ctrlKey && !e.metaKey)) {
+    e.preventDefault();
+    var fm = document.getElementById('forge-map');
+    if (fm.classList.contains('open')) closeForgeMap();
+    else openForgeMap();
+  }
+});
+
+/* ==== WHISPER HINTS ==== */
+var WHISPER_PHRASES = [
+  "try searching 'claude code tutorials'",
+  "paste a YouTube URL to start",
+  "switch to Pipeline tab for guided flow \u2192",
+  "search any topic on YouTube",
+  "type a keyword and press Enter",
+];
+var whisperIndex = 0;
+
+function initWhisperHints() {
+  var input = document.getElementById('input');
+  if (!input) return;
+  setInterval(function() {
+    if (document.activeElement === input || input.value.trim()) return;
+    input.setAttribute('placeholder', WHISPER_PHRASES[whisperIndex]);
+    whisperIndex = (whisperIndex + 1) % WHISPER_PHRASES.length;
+  }, 3500);
+}
+
+/* One-shot hints */
+function getSeenHints() { try { return JSON.parse(localStorage.getItem('ideaforge_hints_seen')||'{}'); } catch(e) { return {}; } }
+function markHintSeen(id) { var s=getSeenHints(); s[id]=true; localStorage.setItem('ideaforge_hints_seen',JSON.stringify(s)); }
+function isHintSeen(id) { return !!getSeenHints()[id]; }
+
+function showMicroHint(targetEl, message, hintId) {
+  if (isHintSeen(hintId)) return;
+  var hint = document.createElement('div');
+  hint.className = 'micro-hint';
+  hint.innerHTML = message + '<button class="micro-hint-dismiss" onclick="this.parentElement.remove()">got it</button>';
+  var parent = targetEl.closest('.section-inner') || targetEl.closest('.ic-header') || targetEl.parentElement;
+  parent.style.position = 'relative';
+  parent.appendChild(hint);
+  var rect = targetEl.getBoundingClientRect();
+  var parentRect = parent.getBoundingClientRect();
+  hint.style.left = Math.max(0, rect.left - parentRect.left) + 'px';
+  hint.style.top = Math.max(0, rect.top - parentRect.top - hint.offsetHeight - 12) + 'px';
+  markHintSeen(hintId);
+  setTimeout(function() { if (hint.parentElement) hint.remove(); }, 8000);
+}
+
+/* Hook: one-shot hints after render */
+addPostRenderHook(function(ideas) {
+  if (ideas.length > 0 && ideas.some(function(i) { return i.instr_status==='done'; }) && !isHintSeen('first_complete')) {
+    setTimeout(function() {
+      var btn = document.querySelector('.btn-push');
+      if (btn) showMicroHint(btn, 'Idea ready! Push to NotebookLM to generate a podcast.', 'first_complete');
+    }, 1500);
+  }
+  if (ideas.length >= 3 && selectedIdeas.size === 0 && !isHintSeen('multi_select')) {
+    setTimeout(function() {
+      var cb = document.querySelector('.idea-card input[type="checkbox"]');
+      if (cb) showMicroHint(cb, 'Select multiple ideas to batch-create a notebook.', 'multi_select');
+    }, 2500);
+  }
+});
+
+/* ==== FEATURE DISCOVERY GLOW ==== */
+function getSeenFeatures() { try { return JSON.parse(localStorage.getItem('ideaforge_seen_features')||'[]'); } catch(e) { return []; } }
+function markFeatureSeen(id) { var s=getSeenFeatures(); if(s.indexOf(id)===-1)s.push(id); localStorage.setItem('ideaforge_seen_features',JSON.stringify(s)); }
+function isFeatureSeen(id) { return getSeenFeatures().indexOf(id) !== -1; }
+
+function initDiscoveryGlow() {
+  var targets = [
+    {id:'pipeline_tab', selector:'.main-tab[data-view="pipeline"]'},
+    {id:'nlm_section', selector:'.nb-panel-header'},
+  ];
+  targets.forEach(function(t) {
+    if (isFeatureSeen(t.id)) return;
+    var el = document.querySelector(t.selector);
+    if (!el) return;
+    el.classList.add('discovery-glow');
+    el.addEventListener('click', function handler() {
+      el.classList.remove('discovery-glow');
+      markFeatureSeen(t.id);
+      el.removeEventListener('click', handler);
+    }, {once: true});
+  });
+}
+
+/* Hook: glow on dynamically-rendered Push to NLM buttons */
+addPostRenderHook(function() {
+  if (isFeatureSeen('push_nlm')) return;
+  document.querySelectorAll('.btn-push').forEach(function(btn) {
+    if (btn.classList.contains('discovery-glow')) return;
+    btn.classList.add('discovery-glow');
+    btn.addEventListener('click', function() {
+      btn.classList.remove('discovery-glow');
+      markFeatureSeen('push_nlm');
+    }, {once: true});
+  });
+});
+
+/* ==== SMART EMPTY STATE TYPING ==== */
+function scAnimateTyping() {
+  var el = document.getElementById('sc-typing-1');
+  if (!el) return;
+  var phrases = ['claude code tutorial','AI agent framework','saas ideas 2026','notebooklm tips'];
+  var pi = 0, ci = 0, deleting = false;
+  function tick() {
+    if (!document.getElementById('sc-typing-1')) return;
+    var phrase = phrases[pi];
+    if (!deleting) {
+      ci++;
+      el.textContent = phrase.slice(0, ci);
+      if (ci >= phrase.length) { deleting = true; setTimeout(tick, 1800); return; }
+    } else {
+      ci--;
+      el.textContent = phrase.slice(0, ci);
+      if (ci <= 0) { deleting = false; pi = (pi+1) % phrases.length; setTimeout(tick, 500); return; }
+    }
+    setTimeout(tick, deleting ? 40 : 80);
+  }
+  setTimeout(tick, 600);
+}
+
+/* ==== FLOATING HINT BAR ==== */
+function updateHintBar() {
+  var bar = document.getElementById('hint-bar');
+  var text = document.getElementById('hint-bar-text');
+  if (!bar || !text) return;
+  var selBar = document.getElementById('selection-bar');
+  var selActive = selBar && !selBar.classList.contains('hidden');
+  if (selActive) { bar.classList.remove('visible'); return; }
+
+  var msg = '';
+  var currentView = document.getElementById('view-pipeline').classList.contains('hidden') ? 'ideas' : 'pipeline';
+
+  if (currentView === 'pipeline') {
+    if (pipe.step === 'processing') msg = 'Processing pipeline\u2026 results appear as each video completes';
+    else if (pipe.step === 'source' && pipe.urls.length === 0) msg = 'Search YouTube or paste URLs to build your pipeline';
+  } else {
+    if (ideaCache.length === 0) {
+      msg = 'Search YouTube or paste a URL to start \u2014 press <span class="hint-bar-accent">?</span> for all capabilities';
+    } else if (ideaCache.some(function(i){return i.instr_status==='done';})) {
+      msg = 'Select ideas to batch-create notebooks \u2014 or <span class="hint-bar-accent">Push to NLM</span> on any card';
+    }
+    if (!nlmAuth.authenticated && nlmAuth.installed === false && ideaCache.length > 0) {
+      msg = 'Install NotebookLM CLI to unlock podcast generation: <span class="hint-bar-accent">pip install notebooklm-py[browser]</span>';
+    }
+  }
+
+  if (msg) { text.innerHTML = msg; bar.classList.add('visible'); }
+  else { bar.classList.remove('visible'); }
+}
+
+/* Hook hint bar into state changes */
+addPostRenderHook(function() { updateHintBar(); });
+var _origSwitchView = switchView;
+switchView = function(v) { _origSwitchView(v); updateHintBar(); };
+var _origUpdateSelBar = updateSelectionBar;
+updateSelectionBar = function() { _origUpdateSelBar(); updateHintBar(); };
+
+/* Forge Map search input handler */
+document.addEventListener('DOMContentLoaded', function() {
+  var fmSearch = document.getElementById('fm-search');
+  if (fmSearch) fmSearch.addEventListener('input', function() { renderForgeMap(fmSearch.value); });
+});
+
+</script>
+</body>
+</html>

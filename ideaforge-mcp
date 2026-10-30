@@ -1,0 +1,282 @@
+#!/usr/bin/env python3
+"""IdeaForge MCP Server — Exposes the founder brain as a queryable service.
+
+Reads from the same SQLite database as the main IdeaForge server.
+Tools are thin wrappers around the same Python functions that power the HTTP API.
+
+Usage:
+    python3 ideaforge-mcp                   # stdio transport (for Claude Code)
+    python3 ideaforge-mcp --sse             # SSE transport on port 7889
+"""
+import sys, os, json, importlib.util, importlib.machinery
+
+# Import ideaforge module from the same directory (no .py extension)
+_here = os.path.abspath(os.path.dirname(__file__))
+_loader = importlib.machinery.SourceFileLoader("ideaforge", os.path.join(_here, "ideaforge"))
+_spec = importlib.util.spec_from_loader("ideaforge", _loader)
+_mod = importlib.util.module_from_spec(_spec)
+sys.modules["ideaforge"] = _mod
+_spec.loader.exec_module(_mod)
+
+# Bind functions from ideaforge
+db = _mod.db
+compute_patterns = _mod.compute_patterns
+compute_calibration = _mod.compute_calibration
+compute_per_complexity_thresholds = _mod.compute_per_complexity_thresholds
+compute_per_domain_thresholds = _mod.compute_per_domain_thresholds
+compute_research_funnel = _mod.compute_research_funnel
+compute_topic_performance = _mod.compute_topic_performance
+build_brain_export = _mod.build_brain_export
+brain_should_build = _mod.brain_should_build
+brain_similar_ideas = _mod.brain_similar_ideas
+now_iso = _mod.now_iso
+init_db = _mod.init_db
+EVAL_PROFILE = _mod.EVAL_PROFILE
+DATA_DIR = _mod.DATA_DIR
+JOBQ = _mod.JOBQ
+
+import sqlite3
+from mcp.server.fastmcp import FastMCP
+
+mcp = FastMCP(
+    "IdeaForge Brain",
+    instructions="IdeaForge founder brain — calibrated decision engine for solo developers. "
+                 "Query the brain before building, get patterns, evaluate URLs, and access research insights.",
+)
+
+# Ensure DB is initialized
+init_db()
+
+
+# ======================== TOOLS ========================
+
+@mcp.tool()
+def ideaforge_brain_query(
+    question: str,
+    description: str = "",
+    complexity_estimate: int = None,
+    source_type: str = "youtube",
+) -> dict:
+    """Ask IdeaForge's brain whether a project idea is worth building.
+
+    Returns a calibrated BUILD/PARK/SKIP verdict based on the founder's
+    shipping history, per-complexity thresholds, and domain fit.
+
+    Args:
+        question: The idea title or question (e.g. "CLI tool for invoice reconciliation")
+        description: Optional longer description of the idea
+        complexity_estimate: 1-5 complexity rating (optional, improves accuracy)
+        source_type: Source type hint — youtube, rss, web, text (default: youtube)
+    """
+    result = brain_should_build(question, description, source_type, complexity_estimate)
+
+    # If confidence is low and LLM is available, enhance
+    if result["confidence"] < 0.5 and _mod.ai_backend:
+        brain_path = os.path.join(DATA_DIR, "brain", "brain-latest.json")
+        brain_ctx = ""
+        if os.path.exists(brain_path):
+            try:
+                brain_ctx = json.dumps(json.load(open(brain_path, "r")), indent=1)[:3000]
+            except Exception:
+                pass
+        llm_prompt = f"""You are IdeaForge's brain — a calibrated decision engine for a solo developer.
+
+BRAIN STATE:
+{brain_ctx}
+
+QUESTION: Should this developer build: "{question}"
+{f'Description: {description[:300]}' if description else ''}
+{f'Estimated complexity: {complexity_estimate}/5' if complexity_estimate else ''}
+
+Based on the brain state (patterns, calibration, ship rates, verdict anchors), give:
+1. verdict: BUILD, PARK, or SKIP
+2. confidence: 0.0-1.0
+3. reason: 1-2 sentences explaining why
+4. estimated_fit: 0-100 score estimate
+
+Reply ONLY with valid JSON: {{"verdict":"...","confidence":0.0,"reason":"...","estimated_fit":0}}"""
+        try:
+            llm_resp = _mod.llm_call(llm_prompt, max_tokens=300, temperature=0.3)
+            llm_json = json.loads(llm_resp)
+            result["verdict"] = llm_json.get("verdict", result["verdict"])
+            result["confidence"] = llm_json.get("confidence", result["confidence"])
+            result["reason"] = llm_json.get("reason", result["reason"])
+            if llm_json.get("estimated_fit"):
+                result["estimated_fit"] = llm_json["estimated_fit"]
+            result["source"] = "llm_enhanced"
+        except Exception:
+            result["source"] = "pattern_match"
+    else:
+        result["source"] = "pattern_match"
+
+    return result
+
+
+@mcp.tool()
+def ideaforge_evaluate_url(url: str) -> dict:
+    """Queue a URL for full IdeaForge pipeline evaluation (extract → evaluate → instruct).
+
+    The URL will be processed asynchronously by the main IdeaForge server.
+    Returns the new idea ID and status.
+
+    Args:
+        url: YouTube URL, RSS feed URL, PDF URL, or plain text to evaluate
+    """
+    source_kind, source_val = _mod.detect_source_kind(url)
+    ts = now_iso()
+    with db() as conn:
+        cur = conn.execute("""
+            INSERT INTO ideas (youtube_url, source_kind, source_url,
+                             extract_status, eval_status, instr_status,
+                             created_at, updated_at)
+            VALUES (?, ?, ?, 'pending', 'pending', 'pending', ?, ?)
+        """, (url if source_kind == "youtube" else None,
+              source_kind, url, ts, ts))
+        idea_id = cur.lastrowid
+        _mod.log_event(conn, idea_id, "mcp:ingest", url)
+
+    JOBQ.put({"kind": "extract", "idea_id": idea_id, "url": url, "chain": ["evaluate", "instruct"]})
+    return {"id": idea_id, "status": "queued", "message": f"Idea #{idea_id} queued for full pipeline (extract → evaluate → instruct)"}
+
+
+@mcp.tool()
+def ideaforge_patterns() -> dict:
+    """Get current decision patterns from the founder's brain.
+
+    Returns calibrated thresholds, verdict distribution, ship rates,
+    complexity breakdown, and weekly evaluation trend.
+    """
+    patterns = compute_patterns()
+    calibration = None
+    with db() as conn:
+        conn.row_factory = sqlite3.Row
+        row = conn.execute("SELECT * FROM calibration_log ORDER BY id DESC LIMIT 1").fetchone()
+        if row:
+            calibration = dict(row)
+
+    complexity_thresholds = compute_per_complexity_thresholds()
+    domain_thresholds = compute_per_domain_thresholds()
+
+    return {
+        "patterns": patterns if patterns.get("ready") else None,
+        "calibration": calibration,
+        "complexity_thresholds": complexity_thresholds.get("thresholds") if complexity_thresholds.get("ready") else None,
+        "domain_thresholds": domain_thresholds.get("domains") if domain_thresholds.get("ready") else None,
+        "profile": EVAL_PROFILE,
+    }
+
+
+@mcp.tool()
+def ideaforge_recent_builds(limit: int = 5) -> list:
+    """Get recent ideas with their verdicts and outcomes.
+
+    Provides context about what the founder is currently building,
+    what was shipped, and what was abandoned.
+
+    Args:
+        limit: Maximum number of ideas to return (default: 5, max: 20)
+    """
+    limit = min(max(1, limit), 20)
+    with db() as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute("""
+            SELECT id, video_title, eval_verdict, eval_fit_score, eval_complexity,
+                   eval_one_sentence, outcome, source_kind, created_at
+            FROM ideas
+            WHERE eval_verdict IS NOT NULL
+            ORDER BY created_at DESC
+            LIMIT ?
+        """, (limit,)).fetchall()
+    return [dict(r) for r in rows]
+
+
+@mcp.tool()
+def ideaforge_research(brief: str, mode: str = "youtube") -> dict:
+    """Trigger a research run from an agent.
+
+    Queues a full research run (plan → search → rank) and returns the run ID.
+    The results can be checked later via the IdeaForge web UI.
+
+    Args:
+        brief: Natural language research brief (e.g. "AI agent framework tutorials from 2026")
+        mode: Search mode — youtube (default)
+    """
+    if not _mod.ai_backend:
+        return {"error": "AI backend not configured. Set GEMINI_API_KEY or ANTHROPIC_API_KEY."}
+    ts = now_iso()
+    with db() as conn:
+        cur = conn.execute("""
+            INSERT INTO research_runs (mode, prompt, status, created_at, updated_at)
+            VALUES (?, ?, 'pending', ?, ?)
+        """, (mode, brief, ts, ts))
+        run_id = cur.lastrowid
+    JOBQ.put({"kind": "research_run", "idea_id": 0, "run_id": run_id})
+    return {"run_id": run_id, "status": "queued", "message": f"Research run #{run_id} queued. Check IdeaForge UI for results."}
+
+
+# ======================== RESOURCES ========================
+
+@mcp.resource("brain://latest")
+def brain_latest() -> str:
+    """Latest brain export JSON — the portable founder profile with calibration, patterns, and research insights."""
+    brain_path = os.path.join(DATA_DIR, "brain", "brain-latest.json")
+    if os.path.exists(brain_path):
+        return open(brain_path, "r", encoding="utf-8").read()
+    # Generate fresh export
+    brain = build_brain_export()
+    return json.dumps(brain, indent=2)
+
+
+@mcp.resource("brain://markdown")
+def brain_markdown() -> str:
+    """FOUNDER-BRAIN.md content — for injecting into CLAUDE.md or agent system prompts."""
+    md_path = os.path.join(DATA_DIR, "brain", "FOUNDER-BRAIN.md")
+    if os.path.exists(md_path):
+        return open(md_path, "r", encoding="utf-8").read()
+    brain = build_brain_export()
+    return _mod.generate_brain_markdown(brain)
+
+
+@mcp.resource("calibration://current")
+def calibration_current() -> str:
+    """Current calibration snapshot — effective threshold, ship rates, and fit score distributions."""
+    with db() as conn:
+        conn.row_factory = sqlite3.Row
+        row = conn.execute("SELECT * FROM calibration_log ORDER BY id DESC LIMIT 1").fetchone()
+    if row:
+        return json.dumps(dict(row), indent=2)
+    return json.dumps({"message": "No calibration data yet. Track outcomes on evaluated ideas to calibrate."})
+
+
+@mcp.resource("patterns://all")
+def patterns_all() -> str:
+    """Full pattern analysis — verdict distribution, complexity breakdown, ship rates, trends."""
+    patterns = compute_patterns()
+    return json.dumps(patterns, indent=2)
+
+
+@mcp.resource("ideas://recent")
+def ideas_recent() -> str:
+    """Recent ideas with verdicts — for context on current building activity."""
+    with db() as conn:
+        conn.row_factory = sqlite3.Row
+        rows = conn.execute("""
+            SELECT id, video_title, eval_verdict, eval_fit_score, eval_complexity,
+                   eval_one_sentence, outcome, source_kind, created_at
+            FROM ideas WHERE eval_verdict IS NOT NULL
+            ORDER BY created_at DESC LIMIT 10
+        """).fetchall()
+    return json.dumps([dict(r) for r in rows], indent=2)
+
+
+# ======================== MAIN ========================
+
+def main():
+    transport = "stdio"
+    if "--sse" in sys.argv:
+        transport = "sse"
+    mcp.run(transport=transport)
+
+
+if __name__ == "__main__":
+    main()

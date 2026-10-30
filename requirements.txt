@@ -1,0 +1,15 @@
+# IdeaForge dependencies
+# Python 3.10+ required
+
+# Core dependencies
+python-dotenv>=1.0.0
+yt-dlp>=2024.0.0
+feedparser>=6.0.0
+pdfminer.six>=20221105
+
+# AI backends (at least one required)
+google-genai>=0.2.0  # Gemini (recommended for web grounding)
+# anthropic>=0.18.0  # Anthropic Claude (uncomment if using)
+
+# Optional: for web research fallback
+requests>=2.31.0
