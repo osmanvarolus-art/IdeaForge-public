@@ -5,6 +5,7 @@ from pathlib import Path
 import subprocess
 import sys
 import unittest
+import unittest.mock
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -66,3 +67,22 @@ class OptionTerminatorTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+
+class WorkerRecheckTests(unittest.TestCase):
+    setUp = fixtures.HubIntakeTests.setUp
+    server = fixtures.HubIntakeTests.server
+
+    def test_worker_refuses_file_swapped_to_outside_after_accept(self):
+        inbox = self.root / 'inbox'
+        inbox.mkdir()
+        secret = self.root / 'secret.txt'
+        secret.write_text('private data')
+        link = inbox / 'note.txt'
+        link.symlink_to(secret)                                   # accepted as inbox file, now points outside
+        with unittest.mock.patch.dict('os.environ', {'IDEAFORGE_INBOX': str(inbox)}):
+            idea_id, _ = self.app.ingest_idea(str(link), 'text')
+            self.app.extract_text_job(idea_id, str(link))
+            with self.app.db() as conn:
+                preview = conn.execute("SELECT transcript_preview FROM ideas WHERE id=?", (idea_id,)).fetchone()[0]
+        self.assertNotIn('private data', preview or '')

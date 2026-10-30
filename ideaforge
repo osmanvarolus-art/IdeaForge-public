@@ -514,6 +514,13 @@ def local_file_allowed(path):
     return real == root or real.startswith(root + os.sep)
 
 
+def inbox_path(path):
+    """Resolve once and return the real path when it sits inside the inbox, else None. Workers call this right before opening
+    a file, so a file swapped for a symlink after the request was accepted is still refused."""
+    real = os.path.realpath(path)
+    return real if local_file_allowed(real) and os.path.isfile(real) and not os.path.islink(real) else None
+
+
 def http_source(url):
     """detect_source_kind for a request that came over HTTP: a local file outside the inbox is refused."""
     kind, val = detect_source_kind(url)
@@ -1024,6 +1031,13 @@ def extract_pdf_job(idea_id: int, path: str) -> bool:
             conn.execute("UPDATE ideas SET extract_status=?, last_error=?, updated_at=? WHERE id=?",
                          ("failed", "pdfminer not installed. Run: pip install pdfminer.six", now_iso(), idea_id))
         return False
+    safe = inbox_path(path)
+    if safe is None:
+        with db() as conn:
+            conn.execute("UPDATE ideas SET extract_status=?, last_error=?, updated_at=? WHERE id=?",
+                         ("failed", "file is not inside the inbox folder", now_iso(), idea_id))
+        return False
+    path = safe
     t0 = time.monotonic()
     d = idea_dir(idea_id)
     with db() as conn:
@@ -1104,9 +1118,12 @@ def extract_text_job(idea_id: int, content: str) -> bool:
     try:
         # If content is a file path, read it
         if os.path.isfile(content):
-            with open(content, "r", encoding="utf-8", errors="ignore") as f:
+            safe = inbox_path(content)
+            if safe is None:
+                raise PermissionError("file is not inside the inbox folder")
+            with open(safe, "r", encoding="utf-8", errors="ignore") as f:
                 text = f.read()
-            title = os.path.basename(content)
+            title = os.path.basename(safe)
         else:
             text = content
             title = text[:60].strip() + ("..." if len(text) > 60 else "")
