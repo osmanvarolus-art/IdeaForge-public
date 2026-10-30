@@ -17,9 +17,9 @@ def https_url(value):
 def probe(query, runner=None, limit=5):
     runner = runner or subprocess.run
     commands = {
-        "github": ["gh", "search", "issues", query, "--limit", str(limit), "--json", "url,title,commentsCount"],
-        "reddit": ["rdt", "search", query, "--limit", str(limit)],
-        "twitter": ["twitter", "search", query, "-n", str(limit), "--json"],
+        "github": ["gh", "search", "issues", "--limit", str(limit), "--json", "url,title,commentsCount", "--", query],
+        "reddit": ["rdt", "search", "--limit", str(limit), "--", query],
+        "twitter": ["twitter", "search", "-n", str(limit), "--json", "--", query],
     }
     rows = []
     for platform, command in commands.items():

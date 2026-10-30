@@ -507,6 +507,21 @@ def youtube_identity(url):
         return None
 
 
+def local_file_allowed(path):
+    """Files named over HTTP must sit inside the inbox folder (IDEAFORGE_INBOX, default ./inbox); the CLI is not limited."""
+    root = os.path.realpath(os.environ.get("IDEAFORGE_INBOX", os.path.join(os.path.dirname(os.path.abspath(__file__)), "inbox")))
+    real = os.path.realpath(path)
+    return real == root or real.startswith(root + os.sep)
+
+
+def http_source(url):
+    """detect_source_kind for a request that came over HTTP: a local file outside the inbox is refused."""
+    kind, val = detect_source_kind(url)
+    if kind in ("pdf", "text") and os.path.isfile(val) and not local_file_allowed(val):
+        raise PermissionError("local files are only read from the inbox folder")
+    return kind, val
+
+
 def ingest_idea(url, source_kind, *, title=None, source=None, chain=None, content=None):
     """Share the manual and hub queue path; serialize video identity checks with inserts."""
     video_id = youtube_identity(url)
@@ -3723,6 +3738,23 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
+    def _guard(self, post=False):
+        """Refuse DNS-rebinding and cross-site requests. The server is loopback only, so the Host must be this
+        server's own address; a browser page on another origin must not be able to drive it."""
+        headers = getattr(self, "headers", None)
+        if headers is None:                                    # unit tests call handlers without a socket
+            return True
+        port = self.server.server_port
+        ok = headers.get("Host", "") in (f"127.0.0.1:{port}", f"localhost:{port}")
+        origin = headers.get("Origin")
+        if ok and origin is not None:
+            ok = origin in (f"http://127.0.0.1:{port}", f"http://localhost:{port}")
+        if ok and post:
+            ok = headers.get("Content-Type", "").split(";")[0].strip().lower() == "application/json"
+        if not ok:
+            self._json({"ok": False, "error": "forbidden"}, 403)
+        return ok
+
     def _read_json(self):
         n = int(self.headers.get("Content-Length", "0"))
         if n <= 0 or n > 1024 * 1024:
@@ -3731,6 +3763,8 @@ class Handler(BaseHTTPRequestHandler):
         return json.loads(raw.decode("utf-8"))
 
     def do_GET(self):
+        if not self._guard():
+            return
         if self.path == "/api/scout":
             self._json({"ok": True, "runs": scout_runs()})
             return
@@ -4139,6 +4173,8 @@ openDetails = async function(id, tab) {
         self._json({"ok": False, "error": "not found"}, 404)
 
     def do_POST(self):
+        if not self._guard(post=True):
+            return
         body = self._read_json()
         if body is None:
             self._json({"ok": False, "error": "invalid json"}, 400); return
@@ -4166,7 +4202,10 @@ openDetails = async function(id, tab) {
             url = (body.get("url") or "").strip()
             if not url:
                 self._json({"ok": False, "error": "url/input required"}, 400); return
-            source_kind, source_val = detect_source_kind(url)
+            try:
+                source_kind, source_val = http_source(url)
+            except PermissionError as error:
+                self._json({"ok": False, "error": str(error)}, 403); return
 
             idea_id, added = ingest_idea(source_val, source_kind)
             self._json({"ok": True, "id": idea_id, "status": "queued" if added else "existing", "source_kind": source_kind})
@@ -4176,7 +4215,10 @@ openDetails = async function(id, tab) {
             url = (body.get("url") or "").strip()
             if not url:
                 self._json({"ok": False, "error": "url/input required"}, 400); return
-            source_kind, source_val = detect_source_kind(url)
+            try:
+                source_kind, source_val = http_source(url)
+            except PermissionError as error:
+                self._json({"ok": False, "error": str(error)}, 403); return
 
             idea_id, added = ingest_idea(source_val, source_kind, chain=["evaluate", "instruct"])
             self._json({"ok": True, "id": idea_id, "status": "queued: extract→evaluate→instruct" if added else "existing", "source_kind": source_kind})
